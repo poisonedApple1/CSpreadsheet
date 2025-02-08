@@ -4,8 +4,9 @@
 #include <string.h> 
 #include <stdlib.h>
 #include <unistd.h> 
+#include <stdbool.h>
 
-
+int ROWS,COLUMNS;
 
 int min(int a,int b){
     return (a<b)?a:b;
@@ -30,6 +31,18 @@ char* column_name(int column_number) {
     name[3]='\0';
     return name;
 }
+int get_col(char *col_name){ // opposite to column_name function
+    int ans = 0;
+    int len = strlen(col_name);
+    int mul = 1;
+    for(int i = len-1; i>=0; i--){
+        int temp = *(col_name + i) - 'A' + 1;
+        ans += temp * mul;
+        mul *= 26;
+    } 
+    return ans - 1;
+}
+
 void print_table(int m,int n,int column_start,int row_start){
     const int display_column_number=column_start+min(n,10),display_row_number=row_start+min(m,10);
     const int space=10;
@@ -55,6 +68,56 @@ void print_table(int m,int n,int column_start,int row_start){
 
 }
 
+bool is_valid_cell(char *cell){
+    if(strlen(cell)>3) return false;
+    char col[3];
+    int i = 0;
+    while(i<3){
+        if(cell[i]>='A' && cell[i]<='Z'){
+            col[i] = cell[i];
+        }else{
+            return false;
+        }
+        i++;
+    }
+    col[i] = '\0';
+    //check row is covetive to int
+    while(i<strlen(cell)){
+        if(cell[i]>='0' && cell[i]<='9'){
+            i++;
+        }else{
+            return false;
+        }
+    }
+    int row = atoi(cell+i);
+    if(row>0 && row<=ROWS && get_col(col)>=0 && get_col(col)<COLUMNS){
+        return true;
+    }
+    return false;
+}
+
+typedef struct spreadsheet{
+    int val;
+    char optype;
+    char *cell1,*cell2;
+    
+} spreadsheet;
+ 
+spreadsheet **sheet;
+
+void make_sheet(int row,int col){
+    sheet = (spreadsheet **)malloc(row * sizeof(spreadsheet *));
+    for(int i =0; i<row; i++){
+        sheet[i] = (spreadsheet *)malloc(col * sizeof(spreadsheet));
+        for(int j=0; j<col; j++){
+            sheet[i][j].val = 0;
+            sheet[i][j].optype = '0';
+            sheet[i][j].cell1 = NULL;
+            sheet[i][j].cell2 = NULL;
+        }
+    }
+}
+
 
 int main(int argc, char *argv[]){
 
@@ -65,6 +128,8 @@ int main(int argc, char *argv[]){
     
     int m = atoi(argv[1]);
     int n = atoi(argv[2]);
+    ROWS = m;
+    COLUMNS = n;
     int column_start=0,row_start=0;
     float execution_time=0.0;
     char status[20]="ok";
@@ -72,7 +137,7 @@ int main(int argc, char *argv[]){
     while(1){
         print_table(m,n,column_start,row_start);
         printf("[%.1f] (%s) >",execution_time,status);
-        scanf("%s",command);
+        scanf("%s",command);  //remove all spaces from command if present
         
         if(strcmp(command,"w")==0){
             if(row_start>0) row_start-=10;
@@ -90,13 +155,126 @@ int main(int argc, char *argv[]){
             if(column_start<n-10) column_start+=10;
             strcpy(status,"ok");
         }
-
         else if(strcmp(command,"q")==0){
             break;
+        }else{
+            char assigned_cell[7],temp1[12],temp2[12];
+            int len = strlen(command);
+            int j =0;
+            int i =0;
+            while(i<len && command[i]!='='){
+                assigned_cell[j] = command[i];
+                j++;                
+                i++;
+            }
+            assigned_cell[j] = '\0';
+            if(i == len || !is_valid_cell(assigned_cell)){
+                strcpy(status,"unrecognized cmd");
+                continue;
+            }
+            i++;
+            j=0;
+            while(i<len && command[i]!='(' && command[i]!='+' && command[i]!='-' && command[i]!='*' && command[i]!='/'){
+                if(command[i]!=' '){
+                    temp1[j] = command[i];
+                    j++;
+                }
+                i++;
+            }
+            temp1[j] = '\0';
+            if(command[i]=='('){
+                if (strcmp(temp1, "MAX") == 0) {
+                
+                } else if (strcmp(temp1, "MIN") == 0) {
+                
+                } else if (strcmp(temp1, "SUM") == 0) {
+                    
+                } else if (strcmp(temp1, "AVG") == 0) {
+                
+                } else if (strcmp(temp1, "STDEV") == 0) {
+                    
+                } else if (strcmp(temp1, "SLEEP") == 0) {
+                
+                } else {
+                    strcpy(status,"unrecognized cmd");
+                    continue;
+                }
+            }else if(command[i]=='+'){
+                i++;
+                j=0;
+                while(i<len && command[i]!=' '){
+                    if(command[i]!=' '){
+                        temp2[j] = command[i];
+                        j++;
+                    }
+                    i++;
+                }
+                temp2[j] = '\0';
+                if(!is_valid_cell(temp2)){
+                    strcpy(status,"unrecognized cmd");
+                    continue;
+                }
+                // peroform addition
+
+            }else if(command[i]=='-'){
+                i++;
+                j=0;
+                while(i<len && command[i]!=' '){
+                    if(command[i]!=' '){
+                        temp2[j] = command[i];
+                        j++;
+                    }
+                    i++;
+                }
+                temp2[j] = '\0';
+                if(!is_valid_cell(temp2)){
+                    strcpy(status,"unrecognized cmd");
+                    continue;
+                }
+
+            }else if(command[i]=='*'){
+                i++;
+                j=0;
+                while(i<len && command[i]!=' '){
+                    if(command[i]!=' '){
+                        temp2[j] = command[i];
+                        j++;
+                    }
+                    i++;
+                }
+                temp2[j] = '\0';
+                if(!is_valid_cell(temp2)){
+                    strcpy(status,"unrecognized cmd");
+                    continue;
+                }
+
+            }else if(command[i]=='/'){
+                i++;
+                j=0;
+                while(i<len && command[i]!=' '){
+                    if(command[i]!=' '){
+                        temp2[j] = command[i];
+                        j++;
+                    }
+                    i++;
+                }
+                temp2[j] = '\0';
+                if(!is_valid_cell(temp2)){
+                    strcpy(status,"unrecognized cmd");
+                    continue;
+                }
+
+            }else{
+                strcpy(status,"unrecognized cmd");
+                continue;
+            }
+            
+
+            
         }
-        else{
-            strcpy(status,"unrecognized cmd");
-        }
+        // else{
+        //     strcpy(status,"unrecognized cmd");
+        // }
     }
     
 
