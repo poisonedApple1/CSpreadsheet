@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #define MAXDEP 10
+int compute(char c[]);
 typedef struct
 {
     char value[20];
@@ -123,31 +124,36 @@ int main(int argc, char *argv[])
         printf("Enter m and n values");
         return 0;
     }
-
+    char oper[20];
+    int print_allowed = 1;
     int m = atoi(argv[1]);
     int n = atoi(argv[2]);
     int column_start = 0, row_start = 0;
     float execution_time = 0.0;
     char status[50] = "ok";
     char command[30];
+    int ref_row;
+    char ref_col[20];
+    char wtf;
+    char val_col1[10], val_col2[10];
+    int val_row1, val_row2;
+    int val1, val2;
+    int v1, v2;
+    char op;
+    char func[10];
     initialise_sheet(m, n);
-    int print_allowed = 1;
+    print_table(m, n, column_start, row_start); // Reprint the sheet
+    printf("[%.1f] (%s) >", execution_time, status);
     while (1)
     {
-        if (print_allowed == 1)
-        {
-            print_table(m, n, column_start, row_start);
-        } // Reprint the sheet
-        printf("[%.1f] (%s) >", execution_time, status);
 
         clock_t start = clock();
-        scanf("%s", command);
-        char ref_col[4];
-        int ref_row;
+        fgets(command, sizeof(command), stdin);
+        command[strcspn(command, "\n")] = 0;
         if (strcmp(command, "w") == 0)
         {
             if (row_start > 0)
-                row_start -= 10;
+                row_start = fmax(row_start - 10, 0);
             strcpy(status, "ok");
         }
         else if (strcmp(command, "s") == 0)
@@ -159,7 +165,7 @@ int main(int argc, char *argv[])
         else if (strcmp(command, "a") == 0)
         {
             if (column_start > 0)
-                column_start -= 10;
+                column_start = fmax(column_start - 10, 10);
             strcpy(status, "ok");
         }
         else if (strcmp(command, "d") == 0)
@@ -172,28 +178,38 @@ int main(int argc, char *argv[])
         {
             break;
         }
-        else if (sscanf(command, "scroll_to %[A-Z]%d", ref_col, &ref_row) == 2)
+        else if (strncmp(command, "scroll_to ", 10) == 0)
         {
-            int c = get_col(ref_col);
-            int r = ref_row - 1; // Convert 1-based row to 0-based index
+            // char *ptr = command + 10;
+            if (sscanf(command, "scroll_to %[A-Za-z]%d", ref_col, &ref_row) == 2)
 
-            // Validate that the cell is within sheet bounds
-            if (r >= 0 && r < m && c >= 0 && c < n)
             {
-                column_start = (c < n - 10) ? c : n - 10;
-                row_start = (r < m - 10) ? r : m - 10;
-                if (row_start < 0)
-                    row_start = 0;
-                if (column_start < 0)
-                    column_start = 0;
+                int c = get_col(ref_col);
+                int r = ref_row - 1; // Convert 1-based row to 0-based index
 
-                strcpy(status, "ok");
+                if (r >= 0 && r < m && c >= 0 && c < n)
+                {
+                    column_start = (c < n - 10) ? c : n - 10;
+                    row_start = (r < m - 10) ? r : m - 10;
+
+                    if (row_start < 0)
+                        row_start = 0;
+                    if (column_start < 0)
+                        column_start = 0;
+
+                    strcpy(status, "ok");
+                }
+                else
+                {
+                    strcpy(status, "Invalid cell reference!");
+                }
             }
             else
             {
-                strcpy(status, "Invalid cell reference!");
+                strcpy(status, "Invalid scroll_to command!");
             }
         }
+
         else if (strcmp(command, "enable_output") == 0)
         {
             print_allowed = 1;
@@ -204,9 +220,119 @@ int main(int argc, char *argv[])
             print_allowed = 0;
             strcpy(status, "ok");
         }
+        else if (sscanf(command, "%[A-Z]%d=%d%c%d", ref_col, &ref_row, &val1, &op, &val2) == 5)
+        {
+            char ans_if[10];
+            int col = get_col(ref_col);
+            int row = ref_row - 1; // Convert 1-based row to 0-based
+            if ((row >= 0 && row < m) && (col >= 0 && col < n))
+            {
+                sprintf(ans_if, "%d", compute(command)); // Convert the result to a string
 
+                strncpy(sheet.data[row][col].value, ans_if, 10); // Copy the string into the cell
+            }
+            else
+            {
+                strcpy(status, "Invalid input");
+            }
+        }
+        else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%[A-Z]%d", ref_col, &ref_row, val_col1, &val_row1, &op, val_col2, &val_row2) == 7)
+        {
+            char ans_if[10];
+            int col = get_col(ref_col);
+            int row = ref_row - 1; // Convert 1-based if row to 0-based
+            if ((row >= 0 && row < m) && (col >= 0 && col < n) && (val_row1 >= 0 && val_row1 < m) && (get_col(val_col1) >= 0 && get_col(val_col1) < n) && (val_row2 >= 0 && val_row2 < m) && (get_col(val_col2) >= 0 && get_col(val_col2) < n))
+            {
+                if (compute(command) != -1)
+                {
+                    sprintf(ans_if, "%d", compute(command));         // Convert the result to a string
+                    strncpy(sheet.data[row][col].value, ans_if, 10); // Copy the string into the cell
+                }
+                else
+                {
+                    strcpy(status, "Invalid input");
+                }
+            }
+            else
+            {
+                strcpy(status, "Invalid input");
+            }
+        }
+        else if (sscanf(command, "%[A-Z]%d=%d%c%[A-Z]%d", ref_col, &ref_row, &val1, &op, val_col1, &val_row1) == 6)
+        {
+            char ans_if[10];
+            int col = get_col(ref_col);
+            int row = ref_row - 1; // Convert 1-based if row to 0-based
+            if ((row >= 0 && row < m) && (col >= 0 && col < n) && (val_row1 >= 0 && val_row1 < m) && (get_col(val_col1) >= 0 && get_col(val_col1) < n))
+            {
+                if (compute(command) != -1)
+                {
+                    sprintf(ans_if, "%d", compute(command));         // Convert the result to a string
+                    strncpy(sheet.data[row][col].value, ans_if, 10); // Copy the string into the cell
+                }
+                else
+                {
+                    strcpy(status, "Invalid input");
+                }
+            }
+            else
+            {
+                strcpy(status, "Invalid input");
+            }
+        }
+        else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%d", ref_col, &ref_row, val_col1, &val_row1, &op, &val1) == 6)
+        {
+            char ans_if[10];
+            int col = get_col(ref_col);
+            int row = ref_row - 1; // Convert 1-based if row to 0-based
+            if ((row >= 0 && row < m) && (col >= 0 && col < n) && (val_row1 >= 0 && val_row1 < m) && (get_col(val_col1) >= 0 && get_col(val_col1) < n))
+            {
+                if (compute(command) != -1)
+                {
+                    sprintf(ans_if, "%d", compute(command));         // Convert the result to a string
+                    strncpy(sheet.data[row][col].value, ans_if, 10); // Copy the string into the cell
+                }
+                else
+                {
+                    strcpy(status, "Invalid input");
+                }
+            }
+            else
+            {
+                strcpy(status, "Invalid input");
+            }
+        }
+        else if (sscanf(command, "%[A-Z]%d=%5[A-Z](%[A-Z]%d:%[A-Z]%d)", ref_col, &ref_row, func, val_col1, &val_row1, val_col2, &val_row2) == 7)
+        {
+            char ans_if[10];
+            int col = get_col(ref_col);
+            int row = ref_row - 1; // Convert 1-based if row to 0-based
+            if ((row >= 0 && row < m) && (col >= 0 && col < n) && (val_row1 >= 0 && val_row1 < m) && (get_col(val_col1) >= 0 && get_col(val_col1) < n) && (val_row2 >= 0 && val_row2 < m) && (get_col(val_col2) >= 0 && get_col(val_col2) < n))
+            {
+                if (compute(command) != -1)
+                {
+                    sprintf(ans_if, "%d", compute(command));         // Convert the result to a string
+                    strncpy(sheet.data[row][col].value, ans_if, 10); // Copy the string into the cell
+                }
+                else
+                {
+                    strcpy(status, "Invalid input");
+                }
+            }
+            else
+            {
+                strcpy(status, "Invalid input");
+            }
+        }
         clock_t end = clock();
         execution_time = (float)(end - start) / CLOCKS_PER_SEC * 1000;
+        if (print_allowed == 1)
+        {
+            print_table(m, n, column_start, row_start); // Reprint the sheet
+            printf("[%.1f] (%s) >", execution_time, status);
+        }
+        else
+            printf("[%.1f] (%s) >", execution_time, status);
     }
     free_sheet();
 
@@ -261,7 +387,14 @@ int AVG(int val_row1, int c1, int val_row2, int c2)
     int ans = 0;
     int total = SUM(val_row1, c1, val_row2, c2);
     int count = (val_row2 - val_row1 + 1) * (c2 - c1 + 1);
-    ans = total / count;
+    if (count > 0)
+    {
+        ans = total / count;
+    }
+    else
+    {
+        return -1;
+    }
     return ans;
 }
 
@@ -273,13 +406,15 @@ int STDEV(int val_row1, int c1, int val_row2, int c2)
     {
         for (int j = c1; j <= c2; j++)
         {
-            total += pow((atoi(sheet.data[i][j].value) - avg), 2);
+            total += (atoi(sheet.data[i][j].value) - avg) * (atoi(sheet.data[i][j].value) - avg);
         }
     }
-    return (int)sqrt(total / ((val_row2 - val_row1 + 1) * (c2 - c1 + 1)));
+    return (int)(round)(sqrt(total / ((val_row2 - val_row1 + 1) * (c2 - c1 + 1))));
 }
 int compute(char command[])
 {
+    char ref_col[10];
+    int ref_row;
     char val_col1[10], val_col2[10];
     int val_row1, val_row2;
     int val1, val2;
@@ -288,7 +423,7 @@ int compute(char command[])
     char func[10];
     int ans;
     // case 1: B1 = int op int;
-    if (sscanf(command, "%d%c%d", &val1, &op, &val2) == 3)
+    if (sscanf(command, "%[A-Z]%d=%d%c%d", ref_col, &ref_row, &val1, &op, &val2) == 5)
     {
 
         switch (op)
@@ -311,13 +446,13 @@ int compute(char command[])
         return ans;
     }
     // case 2: B1 = A1 op A1;
-    else if (sscanf(command, "%[A-Z]%d%c%[A-Z]%d", val_col1, &val_row1, &op, val_col2, &val_row2) == 5)
+    else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%[A-Z]%d", ref_col, &ref_row, val_col1, &val_row1, &op, val_col2, &val_row2) == 7)
     {
 
         int c = get_col(val_col1);
-        v1 = sheet.data[val_row1][c].value;
+        v1 = atoi(sheet.data[val_row1 - 1][c].value);
         int d = get_col(val_col2);
-        v2 = sheet.data[val_row2][d].value;
+        v2 = atoi(sheet.data[val_row2 - 1][d].value);
 
         switch (op)
         {
@@ -331,7 +466,15 @@ int compute(char command[])
             ans = v1 * v2;
             break;
         case '/':
-            ans = v1 / v2;
+            if (v2 != 0)
+            {
+                ans = v1 / v2;
+            }
+            else
+            {
+
+                return -1;
+            }
             break;
         default:
             break;
@@ -339,10 +482,10 @@ int compute(char command[])
         return ans;
     }
     // case 3 : B1 = int op A2
-    else if (sscanf(command, "%d%c%[A-Z]%d", &val1, &op, val_col1, &val_row1) == 4)
+    else if (sscanf(command, "%[A-Z]%d=%d%c%[A-Z]%d", ref_col, &ref_row, &val1, &op, val_col1, &val_row1) == 6)
     {
         int c = get_col(val_col1);
-        v1 = sheet.data[val_row1][c].value;
+        v1 = atoi(sheet.data[val_row1 - 1][c].value);
         switch (op)
         {
         case '+':
@@ -363,10 +506,10 @@ int compute(char command[])
         return ans;
     }
     // case 4 : B1 = A1 op int
-    else if (sscanf(command, "%[A-Z]%d%c%d", val_col1, &val_row1, &op, &val1) == 4)
+    else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%d", ref_col, &ref_row, val_col1, &val_row1, &op, &val1) == 6)
     {
         int c = get_col(val_col1);
-        v1 = sheet.data[val_row1][c].value;
+        v1 = atoi(sheet.data[val_row1 - 1][c].value);
         switch (op)
         {
         case '+':
@@ -387,7 +530,7 @@ int compute(char command[])
         return ans;
     }
     // case 5 : Func(A1:A2)
-    else if (sscanf(command, "%s(%[A-Z]%d:%[A-Z]%d)", func, val_col1, &val_row1, val_col2, &val_row2) == 5)
+    else if (sscanf(command, "%[A-Z]%d=%5[A-Z](%[A-Z]%d:%[A-Z]%d)", ref_col, &ref_row, func, val_col1, &val_row1, val_col2, &val_row2) == 7)
     {
         int c1 = get_col(val_col1);
         int c2 = get_col(val_col2);
@@ -395,27 +538,27 @@ int compute(char command[])
         {
             if (strcmp(func, "SUM") == 0)
             {
-                ans = SUM(val_row1, c1, val_row2, c2);
+                ans = SUM(val_row1 - 1, c1, val_row2 - 1, c2);
                 return ans;
             }
             else if (strcmp(func, "MIN") == 0)
             {
-                ans = MIN(val_row1, c1, val_row2, c2);
+                ans = MIN(val_row1 - 1, c1, val_row2 - 1, c2);
                 return ans;
             }
             else if (strcmp(func, "MAX") == 0)
             {
-                ans = MAX(val_row1, c1, val_row2, c2);
+                ans = MAX(val_row1 - 1, c1, val_row2 - 1, c2);
                 return ans;
             }
             else if (strcmp(func, "AVG") == 0)
             {
-                ans = AVG(val_row1, c1, val_row2, c2);
+                ans = AVG(val_row1 - 1, c1, val_row2 - 1, c2);
                 return ans;
             }
             else if (strcmp(func, "STDEV") == 0)
             {
-                ans = STDEV(val_row1, c1, val_row2, c2);
+                ans = STDEV(val_row1 - 1, c1, val_row2 - 1, c2);
                 return ans;
             }
             else
