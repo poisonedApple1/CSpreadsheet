@@ -1,5 +1,5 @@
 all: 
-	gcc sheet.c sheet_functions.c utils.c parser.c calculate_functions.c -lm -o spreadsheet
+	gcc sheet.c sheet_functions.c utils.c parser.c calculate_functions.c -lm -o sheet
 
 clean:
-	rm -f spreadsheet
+	rm -f sheet

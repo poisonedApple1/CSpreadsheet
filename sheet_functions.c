@@ -153,25 +153,25 @@ void remove_dependency(Cell *cell){
        if(cell == NULL) return true;
        int ans=-1;
        switch(cell->op_code){
-           case '=':  ans=sheet.data[cell->cell1_row][cell->cell1_col].value; break;
-           case '+':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,sheet.data[cell->cell2_row][cell->cell2_col].value); break;
-           case '-':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,sheet.data[cell->cell2_row][cell->cell2_col].value); break;
-           case '*':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,sheet.data[cell->cell2_row][cell->cell2_col].value);    break;
-           case '/':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,sheet.data[cell->cell2_row][cell->cell2_col].value);    break;
-           case 'p':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16));    break;
-           case 's':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16));  break;
-           case 'u':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16));   break;
-           case 'd':
-           int val=cell->cell2_col + cell->cell2_row* pow(2,16);
-           char op_code=get_op_code_rev(cell->op_code);
-           ans=compute_cell(op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,val);
-           if(ans==-1) return false;
-           cell->value=ans;
-           break;
-           case 'Z':
-            ans=sheet.data[cell->cell1_row][cell->cell1_col].value;
-            sleep(ans);
-            break;
+            case '=':  ans=sheet.data[cell->cell1_row][cell->cell1_col].value; break;
+            case '+':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,sheet.data[cell->cell2_row][cell->cell2_col].value); break;
+            case '-':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,sheet.data[cell->cell2_row][cell->cell2_col].value); break;
+            case '*':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,sheet.data[cell->cell2_row][cell->cell2_col].value); break;
+            case '/':  ans=compute_cell(cell->op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,sheet.data[cell->cell2_row][cell->cell2_col].value); break;
+            case 'p':  ans=compute_cell('+',sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16)); break;
+            case 's':  ans=compute_cell('-',sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16)); break;
+            case 'u':  ans=compute_cell('*',sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16)); break;
+            case 'd':  
+                int val=cell->cell2_col + cell->cell2_row* pow(2,16);
+                // char op_code=get_op_code_rev(cell->op_code);
+                ans=compute_cell('/',sheet.data[cell->cell1_row][cell->cell1_col].value,val);
+                if(ans==-1) return false;
+                cell->value=ans;
+                break;
+            case 'Z':
+                ans=sheet.data[cell->cell1_row][cell->cell1_col].value;
+                sleep(ans);
+                break;
             case 'S':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);  break;
             case 'm':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);   break;
             case 'M':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);   break;
@@ -199,7 +199,7 @@ void remove_dependency(Cell *cell){
         cell->cell2_col = cell2_col;
         cell->cell2_row = cell2_row;
         
-        if(op_code=='S' || op_code=='m' || op_code=='M' || op_code=='A' || op_code=='D'){
+    if(op_code=='S' || op_code=='m' || op_code=='M' || op_code=='A' || op_code=='D'){
         for(int i=cell1_row;i<=cell2_row;i++){
             for(int j=cell1_col;j<=cell2_col;j++){ 
                 Node *new_node = malloc(sizeof(Node));
@@ -237,8 +237,5 @@ void remove_dependency(Cell *cell){
     while(temp!=NULL){  
         recalculate(temp->data);
         temp = temp->next;
-    }
-    // for(int i = 0; i < cell->dep_count; i++){
-    //     recalculate(cell->dependencies[i]);
-    // }
+    } 
 }
