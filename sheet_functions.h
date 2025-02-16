@@ -33,8 +33,10 @@ char *column_name(int column_number);
 int get_col(char *col_name);
 void print_table(int column_start, int row_start);
 void free_sheet();
+void remove_form_list(Cell *target,Cell *dep);
 void remove_dependency(Cell *cell);
 bool recalculate(Cell *cell);
 void add_constraints(Cell *cell,short cell1_col,short cell1_row,short cell2_col,short cell2_row,int value,char op_code);
+
 
 #endif
