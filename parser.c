@@ -7,7 +7,6 @@
 #include "parser.h"
 #include <math.h>
 #include <unistd.h>
-
 int column_start = 0, row_start = 0;
 bool print_allowed = true;
 char status[50] = "ok";
@@ -21,7 +20,7 @@ char get_op_code(char op_code){
     return -1;
 }
 
-
+// i not used this function
 // char get_op_code_rev(char op_code){
 //     //function to get operation from opcode for the case of int op cell or cell op int
 //     if (op_code == 'p')      return '+';
@@ -84,42 +83,43 @@ void parser(char* command){
     char op;
     char func[10];
     int ans;
-
+    
     
     if (strcmp(command, "w") == 0){
         if (row_start > 0)
-            row_start = max(row_start - 10, 0);
+        row_start = max(row_start - 10, 0);
         strcpy(status, "ok");
     }
     else if (strcmp(command, "s") == 0){
         if (row_start < sheet.rows - 10)
-            row_start += 10;
+        row_start += 10;
         strcpy(status, "ok");
     }
     else if (strcmp(command, "a") == 0){
         if (column_start > 0)
             column_start = max(column_start - 10, 0);
-        strcpy(status, "ok");
-    }
-    else if (strcmp(command, "d") == 0){
-        if (column_start < sheet.cols - 10)
+            strcpy(status, "ok");
+        }
+        else if (strcmp(command, "d") == 0){
+            if (column_start < sheet.cols - 10)
             column_start += 10;
-        strcpy(status, "ok");
-    }
-    else if (strncmp(command, "scroll_to ", 10) == 0){
-        if (sscanf(command, "scroll_to %[A-Za-z]%d", ref_col, &ref_row) == 2){
-            int c = get_col(ref_col);
-            int r = ref_row - 1;
-            if (is_valid_cell(r,c)){
-                column_start = c;
-                row_start = r;
-                row_start = min(row_start,sheet.rows-10);
-                column_start = min(column_start,sheet.cols-10);
-                row_start= max(row_start,0);
-                column_start=max(column_start,0);
-                strcpy(status, "ok");
-            }
-            else{
+            strcpy(status, "ok");
+        }
+        else if (strncmp(command, "scroll_to", 9) == 0){ 
+            // i removed space thats why 
+            if (sscanf(command, "scroll_to %[A-Z]%d", ref_col, &ref_row) == 2){
+                int c = get_col(ref_col);
+                int r = ref_row - 1;
+                if (is_valid_cell(r,c)){
+                    column_start = c;
+                    row_start = r;
+                    row_start = min(row_start, sheet.rows - 10);
+                    column_start = min(column_start, sheet.cols - 10);
+                    row_start= max(row_start,0);
+                    column_start=max(column_start,0);
+                    strcpy(status, "ok");
+                }
+                else{
                 strcpy(status, "Invalid cmd");
             }
         }
