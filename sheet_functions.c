@@ -161,22 +161,18 @@ void remove_dependency(Cell *cell){
             case 'p':  ans=compute_cell('+',sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16)); break;
             case 's':  ans=compute_cell('-',sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16)); break;
             case 'u':  ans=compute_cell('*',sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16)); break;
-            case 'd':  
-                int val=cell->cell2_col + cell->cell2_row* pow(2,16);
-                // char op_code=get_op_code_rev(cell->op_code);
-                ans=compute_cell('/',sheet.data[cell->cell1_row][cell->cell1_col].value,val);
-                if(ans==-1) return false;
-                cell->value=ans;
-                break;
+            case 'd':   
+                ans=compute_cell('/',sheet.data[cell->cell1_row][cell->cell1_col].value,cell->cell2_col + cell->cell2_row* pow(2,16));
+                if(ans==-1) return false; break;
             case 'Z':
                 ans=sheet.data[cell->cell1_row][cell->cell1_col].value;
                 sleep(ans);
                 break;
             case 'S':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);  break;
-            case 'm':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);   break;
-            case 'M':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);   break;
+            case 'm':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);  break;
+            case 'M':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);  break;
             case 'A':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);  break;
-            case 'D':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);   break;
+            case 'D':  ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);  break;
             case 'X': return true;
         }
         if(ans==-1) return false;
@@ -220,7 +216,7 @@ void remove_dependency(Cell *cell){
             // sheet.data[cell1_row][cell1_col].dependencies[sheet.data[cell1_row][cell1_col].dep_count] = cell;
             sheet.data[cell1_row][cell1_col].dep_count++;
         }
-        if(cell2_col!=-1){
+        if(cell2_col!=-1&&op_code!='p' && op_code!= 's' && op_code != 'u' && op_code!='d'){
             Node *temp = malloc(sizeof(Node));
             temp->data = cell;
             temp->next = sheet.data[cell2_row][cell2_col].dependencies;

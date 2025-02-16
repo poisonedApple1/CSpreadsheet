@@ -306,7 +306,4 @@ void parser(char* command){
     else{
         strcpy(status, "Invalid cmd");
     }
-}
-
-
-
+}  
