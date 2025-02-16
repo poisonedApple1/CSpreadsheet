@@ -14,41 +14,29 @@ char status[50] = "ok";
 
 char get_op_code(char op_code){
     //function to get opcode for the case of int op cell or cell op int
-    switch(op_code){
-        case '+':
-            op_code = 'p';
-            break;
-        case '-':
-            op_code = 's';
-            break;
-        case '*':
-            op_code = 'u';
-            break;
-        case '/':
-            op_code = 'd';
-            break;
-    }
-    return op_code;
+    if (op_code == '+') 
+        return 'p';
+    else if (op_code == '-') 
+        return 's';
+    else if (op_code == '*')
+        return 'u';
+    else if (op_code == '/')
+        return 'd';
+    return -1;
 }
 
 
 char get_op_code_rev(char op_code){
     //function to get operation from opcode for the case of int op cell or cell op int
-    switch(op_code){
-        case 'p':
-            op_code = '+';
-            break;
-        case 's':
-            op_code = '-';
-            break;
-        case 'u':
-            op_code = '*';
-            break;
-        case 'd':
-            op_code = '/';
-            break;
-    }
-    return op_code;
+    if (op_code == 'p') 
+        return '+';
+    else if (op_code == 's') 
+        return '-';
+    else if (op_code == 'u')
+        return '*';
+    else if (op_code == 'd')
+        return '/';
+    return -1;
 }
 
 char func_to_op_code(char *func){
@@ -105,7 +93,24 @@ int compute_range_func(char op_code,int row1,int col1,int row2,int col2){
     }   
 }
 
+void remove_space(char *command){
+    char *i = command, *j = command;
+    while (1) {
+        if (*i && *i != ' ') {
+            *j++ = *i;
+            i++;
+        }else{
+            break;
+        }
+    }
+    
+    *j = '\0';
+}
+
 void parser(char* command){
+    command[strcspn(command, "\n")] = 0;  // remove \n
+    remove_space(command);                // remove spaces44
+
     char ref_col[10];
     int ref_row;
     char val_col1[10], val_col2[10];
@@ -116,7 +121,7 @@ void parser(char* command){
     char func[10];
     int ans;
 
-    command[strcspn(command, "\n")] = 0;
+    
     if (strcmp(command, "w") == 0){
         if (row_start > 0)
             row_start = max(row_start - 10, 0);
@@ -141,14 +146,13 @@ void parser(char* command){
         if (sscanf(command, "scroll_to %[A-Za-z]%d", ref_col, &ref_row) == 2){
             int c = get_col(ref_col);
             int r = ref_row - 1;
-
             if (is_valid_cell(r,c)){
-                column_start = (c < sheet.cols - 10) ? c : sheet.cols - 10;
-                row_start = (r < sheet.rows - 10) ? r : sheet.rows - 10;
-                if (row_start < 0)
-                    row_start = 0;
-                if (column_start < 0)
-                    column_start = 0;
+                column_start = c;
+                row_start = r;
+                row_start = min(row_start,sheet.rows-10);
+                column_start = min(column_start,sheet.cols-10);
+                row_start= max(row_start,0);
+                column_start=max(column_start,0);
                 strcpy(status, "ok");
             }
             else{
@@ -159,7 +163,6 @@ void parser(char* command){
             strcpy(status, "Invalid cmd");
         }
     }
-
     else if (strcmp(command, "enable_output") == 0){
         print_allowed = true;
         strcpy(status, "ok");
@@ -168,7 +171,6 @@ void parser(char* command){
         print_allowed = false;
         strcpy(status, "ok");
     }
-
     // cell = int op int
     else if (sscanf(command, "%[A-Z]%d=%d%c%d", ref_col, &ref_row, &val1, &op, &val2) == 5){
         int col = get_col(ref_col);
@@ -203,8 +205,7 @@ void parser(char* command){
                 strcpy(status, "Invalid cmd");
             }
         }
-        else
-        {
+        else{
             strcpy(status, "Invalid cmd");
         }
     }
@@ -218,29 +219,23 @@ void parser(char* command){
         else if (sscanf(command, "%[A-Z]%d=%d%c%[A-Z]%d", ref_col, &ref_row, &val1, &op, val_col1, &val_row1) == 6){
             int col = get_col(ref_col);
             int row = ref_row - 1;
-            int col1 = get_col(val_col1);
-            printf("here\n");
+            int col1 = get_col(val_col1); 
             if (is_valid_cell(row,col) && is_valid_cell(val_row1-1,col1)){
                 ans=compute_cell(op,val1,sheet.data[val_row1-1][col1].value);
-                printf("ans=%d\n",ans);
-                //splitting the constant into two 16 bit variables
-                int temp=pow(2,16);
-                int const1=val1%temp;
-                val1/=temp;
-                int const2=val1;
+                //splitting the constant into two 16 bit variables using bit operations
+                int const1 = val1 & 0xFFFF;
+                int const2 = (val1 >> 16) & 0xFFFF;
 
                 if (ans != -1){
                     op=get_op_code(op);
                     add_constraints(&sheet.data[row][col],col1,val_row1-1,const1,const2,ans,op);
                     strcpy(status, "ok");
                 }
-                else
-                {
+                else{
                     strcpy(status, "Invalid cmd");
                 }
             }
-            else
-            {
+            else{
                 strcpy(status, "Invalid cmd");
             }
         }
@@ -280,6 +275,8 @@ void parser(char* command){
             int row = ref_row - 1;
             int col1 = get_col(val_col1);
             int col2 = get_col(val_col2);
+            
+
             if (is_valid_cell(row,col) && is_valid_cell(val_row1-1,col1) && is_valid_cell(val_row2-1,col2)){
                 char op_code=func_to_op_code(func);
                 ans=compute_range_func(op_code,val_row1-1,col1,val_row2-1,col2);
@@ -287,13 +284,11 @@ void parser(char* command){
                     add_constraints(&sheet.data[row][col],col1,val_row1-1,col2,val_row2-1,ans,op_code);
                     strcpy(status, "ok");
                 }
-                else
-                {
+                else{
                     strcpy(status, "Invalid cmd");
                 }
             }
-            else
-            {
+            else{
                 strcpy(status, "Invalid cmd");
             }
         }
@@ -305,8 +300,7 @@ void parser(char* command){
                 add_constraints(&sheet.data[row][col],-1,-1,-1,-1,val1,'X');
                 strcpy(status, "ok");
             }
-            else
-            {
+            else{
                 strcpy(status, "Invalid cmd");
             }
         }
@@ -315,7 +309,7 @@ void parser(char* command){
             int col = get_col(ref_col);
             int row = ref_row - 1;
             int col1 = get_col(val_col1);
-            int row1 = val_row1 - 1;
+            int row1 = val_row1 - 1; 
             if (is_valid_cell(row,col) && is_valid_cell(row1,col1)){
                 add_constraints(&sheet.data[row][col],col1,row1,-1,-1,sheet.data[row1][col1].value,'=');
                 strcpy(status, "ok");
@@ -325,8 +319,7 @@ void parser(char* command){
             }
         }
         // sleep(int)
-         else if (sscanf(command, "%[A-z]%d=SLEEP(%d)", ref_col, &ref_row, &val1) == 3)
-        {
+        else if (sscanf(command, "%[A-z]%d=SLEEP(%d)", ref_col, &ref_row, &val1) == 3){
             int col = get_col(ref_col);
             int row = ref_row - 1;
             if (is_valid_cell(row,col) && val1 >= 0){
@@ -334,15 +327,12 @@ void parser(char* command){
                 sleep(val1);
                 strcpy(status, "ok");
             }
-            else
-            {
+            else{
                 strcpy(status, "Invalid cmd");
             }
         }
-
         //cell = sleep(cell)
-        else if (sscanf(command, "%[A-z]%d=SLEEP(%[A-Z]%d)", ref_col, &ref_row, val_col1, &val_row1) == 4)
-        {
+        else if (sscanf(command, "%[A-z]%d=SLEEP(%[A-Z]%d)", ref_col, &ref_row, val_col1, &val_row1) == 4){
             int col = get_col(ref_col);
             int row = ref_row - 1;
             int col1 = get_col(val_col1);
@@ -352,16 +342,13 @@ void parser(char* command){
                 add_constraints(&sheet.data[row][col],col1,row1,-1,-1,sheet.data[row1][col1].value,'Z');
                 strcpy(status, "ok");
             }
-            else
-            {
+            else{
                 strcpy(status, "Invalid cmd");
             }
         }
-        else
-        {
+        else{
             strcpy(status, "Invalid cmd");
         }
-
 }
 
 

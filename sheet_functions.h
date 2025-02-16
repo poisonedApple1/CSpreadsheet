@@ -1,7 +1,7 @@
 #ifndef SHEET_FUNCTIONS_H
-#define SHEET_FUNCTIONS_H
-#define MAXDEP 10
+#define SHEET_FUNCTIONS_H 
 #include <stdbool.h>
+#include <stdlib.h>
 
 
 typedef struct cell{
@@ -12,11 +12,15 @@ typedef struct cell{
     short cell2_col;
     short cell2_row;
     int dep_count;
-    struct cell *dependencies[MAXDEP];
+    struct node *dependencies;
 } Cell;
 
-typedef struct
-{
+typedef struct node{
+    struct cell *data;
+    struct node *next; 
+}Node;
+
+typedef struct{
     int rows;
     int cols;
     Cell **data;
