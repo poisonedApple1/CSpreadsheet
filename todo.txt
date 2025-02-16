@@ -1,0 +1,13 @@
+change sleep function such that recalculations happens and after that sleep is called
+
+use malloc to allocate dependancy array in cell struct
+
+fasos se chicken roll khana hai
+
+handle errors during recalculations -div by 0 
+
+handle circular errors in graph
+
+make the recalculations recursive
+
+

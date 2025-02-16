@@ -1,8 +1,14 @@
 #ifndef PARSER_H
 #define PARSER_H
-
-int compute(char command[]);
-
+#include <stdbool.h>
+void parser(char* command);
+extern int column_start, row_start; 
+extern bool print_allowed;
+extern char status[50];
+char get_op_code(char op_code);
+char get_op_code_rev(char op_code);
+int compute_cell(char op_code,int cell_value,int cell_value2);
+int compute_range_func(char op_code,int row1,int col1,int row2,int col2);
 
 #endif
 

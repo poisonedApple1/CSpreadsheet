@@ -6,6 +6,7 @@ int MIN(int val_row1, int c1, int val_row2, int c2);
 int MAX(int val_row1, int c1, int val_row2, int c2);
 int AVG(int val_row1, int c1, int val_row2, int c2);
 int STDEV(int val_row1, int c1, int val_row2, int c2);
+char func_to_op_code(char *func);
 
 #endif
 

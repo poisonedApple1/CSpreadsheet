@@ -1,14 +1,18 @@
 #ifndef SHEET_FUNCTIONS_H
 #define SHEET_FUNCTIONS_H
 #define MAXDEP 10
+#include <stdbool.h>
 
 
-typedef struct
-{
-    char value[20];
-    char formula[20];
+typedef struct cell{
+    int value;
+    char op_code;
+    short cell1_col;
+    short cell1_row;
+    short cell2_col;
+    short cell2_row;
     int dep_count;
-    int dependencies[MAXDEP];
+    struct cell *dependencies[MAXDEP];
 } Cell;
 
 typedef struct
@@ -25,5 +29,8 @@ char *column_name(int column_number);
 int get_col(char *col_name);
 void print_table(int column_start, int row_start);
 void free_sheet();
+void remove_dependency(Cell *cell);
+bool recalculate(Cell *cell);
+void add_constraints(Cell *cell,short cell1_col,short cell1_row,short cell2_col,short cell2_row,int value,char op_code);
 
 #endif

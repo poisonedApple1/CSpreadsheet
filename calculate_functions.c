@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "sheet_functions.h"
+#include <string.h>
 
 
 int SUM(int val_row1, int c1, int val_row2, int c2)
@@ -11,7 +12,7 @@ int SUM(int val_row1, int c1, int val_row2, int c2)
     {
         for (int j = c1; j <= c2; j++)
         {
-            a += atoi(sheet.data[i][j].value);
+            a += sheet.data[i][j].value;
         }
     }
     return a;
@@ -24,7 +25,7 @@ int MIN(int val_row1, int c1, int val_row2, int c2)
     {
         for (int j = c1; j <= c2; j++)
         {
-            int b = atoi(sheet.data[i][j].value);
+            int b = sheet.data[i][j].value;
             if (b < a)
                 a = b;
         }
@@ -39,7 +40,7 @@ int MAX(int val_row1, int c1, int val_row2, int c2)
     {
         for (int j = c1; j <= c2; j++)
         {
-            int b = atoi(sheet.data[i][j].value);
+            int b = sheet.data[i][j].value;
             if (b > a)
                 a = b;
         }
@@ -71,8 +72,11 @@ int STDEV(int val_row1, int c1, int val_row2, int c2)
     {
         for (int j = c1; j <= c2; j++)
         {
-            total += (atoi(sheet.data[i][j].value) - avg) * (atoi(sheet.data[i][j].value) - avg);
+            total += (sheet.data[i][j].value - avg) * (sheet.data[i][j].value - avg);
         }
     }
     return (int)(round)(sqrt(total / ((val_row2 - val_row1 + 1) * (c2 - c1 + 1))));
 }
+
+
+
