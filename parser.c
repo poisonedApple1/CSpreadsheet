@@ -10,6 +10,10 @@
 int column_start = 0, row_start = 0;
 bool print_allowed = true;
 char status[50] = "ok";
+bool calc_error=false;
+
+
+
 
 char get_op_code(char op_code){
     //function to get opcode for the case of int op cell or cell op int
@@ -20,15 +24,14 @@ char get_op_code(char op_code){
     return -1;
 }
 
-// i not used this function
-// char get_op_code_rev(char op_code){
-//     //function to get operation from opcode for the case of int op cell or cell op int
-//     if (op_code == 'p')      return '+';
-//     else if (op_code == 's') return '-';
-//     else if (op_code == 'u') return '*';
-//     else if (op_code == 'd') return '/';
-//     return -1;
-// }
+char get_op_code_rev(char op_code){
+    //function to get operation from opcode for the case of int op cell or cell op int
+    if (op_code == 'p')      return '+';
+    else if (op_code == 's') return '-';
+    else if (op_code == 'u') return '*';
+    else if (op_code == 'd') return '/';
+    return -1;
+}
 
 char func_to_op_code(char *func){
     //function for getting opcode for the case of func(cell:cell)
@@ -45,12 +48,18 @@ int compute_cell(char op_code,int cell_value,int cell_value2){
     if(op_code=='+')      return cell_value + cell_value2;
     else if(op_code=='-') return cell_value - cell_value2;
     else if(op_code=='*') return cell_value * cell_value2;
-    else if(op_code=='/' && cell_value2!=0) return cell_value / cell_value2;
+    else if(op_code=='/'){
+        if(cell_value2==0){
+            calc_error=true;
+            return -1;
+        }
+        return cell_value / cell_value2;}
+    strcpy(status,"Invalid cmd");
     return -1;
 }
 
 int compute_range_func(char op_code,int row1,int col1,int row2,int col2){
-    if (col1 > col2 || row1 > row2)    return -1;
+    if (col1 > col2 || row1 > row2){strcpy(status,"Invalid cmd");return -1;}
     if (op_code == 'S')      return SUM(row1, col1, row2, col2);
     else if (op_code == 'm') return MIN(row1, col1, row2, col2);
     else if (op_code == 'M') return MAX(row1, col1, row2, col2);
@@ -72,8 +81,7 @@ void remove_space(char *command){
 
 void parser(char* command){
     command[strcspn(command, "\n")] = 0;  // remove \n
-    remove_space(command);                // remove spaces44
-
+    remove_space(command);                // remove spaces4
     char ref_col[10];
     int ref_row;
     char val_col1[10], val_col2[10];
@@ -99,29 +107,29 @@ void parser(char* command){
         if (column_start > 0)
             column_start = max(column_start - 10, 0);
             strcpy(status, "ok");
-        }
-        else if (strcmp(command, "d") == 0){
-            if (column_start < sheet.cols - 10)
-            column_start += 10;
-            strcpy(status, "ok");
-        }
-        else if (strncmp(command, "scroll_to", 9) == 0){ 
-            // i removed space thats why 
-            if (sscanf(command, "scroll_to %[A-Z]%d", ref_col, &ref_row) == 2){
-                int c = get_col(ref_col);
-                int r = ref_row - 1;
-                if (is_valid_cell(r,c)){
-                    column_start = c;
-                    row_start = r;
-                    row_start = min(row_start, sheet.rows - 10);
-                    column_start = min(column_start, sheet.cols - 10);
-                    row_start= max(row_start,0);
-                    column_start=max(column_start,0);
-                    strcpy(status, "ok");
-                }
-                else{
-                strcpy(status, "Invalid cmd");
+    }
+    else if (strcmp(command, "d") == 0){
+        if (column_start < sheet.cols - 10)
+        column_start += 10;
+        strcpy(status, "ok");
+    }
+    else if (strncmp(command, "scroll_to", 9) == 0){ 
+        // i removed space thats why 
+        if (sscanf(command, "scroll_to %[A-Z]%d", ref_col, &ref_row) == 2){
+            int c = get_col(ref_col);
+            int r = ref_row - 1;
+            if (is_valid_cell(r,c)){
+                column_start = c;
+                row_start = r;
+                row_start = min(row_start, sheet.rows - 10);
+                column_start = min(column_start, sheet.cols - 10);
+                row_start= max(row_start,0);
+                column_start=max(column_start,0);
+                strcpy(status, "ok");
             }
+            else
+            strcpy(status, "Invalid cmd");
+            
         }
         else{
             strcpy(status, "Invalid cmd");
@@ -141,13 +149,14 @@ void parser(char* command){
         int row = ref_row - 1;
         if (is_valid_cell(row,col)){
             ans=compute_cell(op,val1,val2);
-            if (ans != -1){
-                add_constraints(&sheet.data[row][col],-1,-1,-1,-1,ans,'X');
-                strcpy(status, "ok");
+            if(calc_error)sheet.data[row][col].isError=true;
+            else {
+                sheet.data[row][col].isError=false;
             }
-            else{
-                strcpy(status, "Invalid cmd");
-            }
+            op='X';
+            calc_error=false;
+            add_constraints(&sheet.data[row][col],-1,-1,-1,-1,ans,op);
+            strcpy(status, "ok");
         }
         else{
             strcpy(status, "Invalid cmd");
@@ -160,14 +169,20 @@ void parser(char* command){
         int col1 = get_col(val_col1);
         int col2 = get_col(val_col2);
         if (is_valid_cell(row,col) && is_valid_cell(val_row1-1,col1) && is_valid_cell(val_row2-1,col2)){
-            ans=compute_cell(op,sheet.data[val_row1-1][col1].value,sheet.data[val_row2-1][col2].value);
-            if (ans != -1){
-                add_constraints(&sheet.data[row][col],col1,val_row1-1,col2,val_row2-1,ans,op);
-                strcpy(status, "ok");
-            }
+            if(sheet.data[val_row1-1][col1].isError || sheet.data[val_row2-1][col2].isError)
+                sheet.data[row][col].isError=true;
             else{
-                strcpy(status, "Invalid cmd");
+                ans=compute_cell(op,sheet.data[val_row1-1][col1].value,sheet.data[val_row2-1][col2].value);
+                if(calc_error)
+                    sheet.data[row][col].isError=true;
+                else
+                    sheet.data[row][col].isError=false;
             }
+            calc_error=false;
+            
+            add_constraints(&sheet.data[row][col],col1,val_row1-1,col2,val_row2-1,ans,op);
+            strcpy(status, "ok");
+            
         }
         else{
             strcpy(status, "Invalid cmd");
@@ -185,18 +200,24 @@ void parser(char* command){
         int row = ref_row - 1;
         int col1 = get_col(val_col1); 
         if (is_valid_cell(row,col) && is_valid_cell(val_row1-1,col1)){
-            ans=compute_cell(op,val1,sheet.data[val_row1-1][col1].value);
+            if(sheet.data[val_row1-1][col1].isError)
+                sheet.data[row][col].isError=true;
+            else{
+                ans=compute_cell(op,val1,sheet.data[val_row1-1][col1].value);
+                if(calc_error)
+                    sheet.data[row][col].isError=true;
+                else
+                    sheet.data[row][col].isError=false;
+            }
+            calc_error=false;
             //splitting the constant into two 16 bit variables using bit operations
             int const1 = val1 & 0xFFFF;
             int const2 = (val1 >> 16) & 0xFFFF;
-            if (ans != -1){
-                op=get_op_code(op);
-                add_constraints(&sheet.data[row][col],col1,val_row1-1,const1,const2,ans,op);
-                strcpy(status, "ok");
-            }
-            else{
-                strcpy(status, "Invalid cmd");
-            }
+          
+            op=get_op_code(op);
+            add_constraints(&sheet.data[row][col],col1,val_row1-1,const1,const2,ans,op);
+            strcpy(status, "ok");
+            
         }
         else{
             strcpy(status, "Invalid cmd");
@@ -209,18 +230,24 @@ void parser(char* command){
         int col1 = get_col(val_col1);
 
         if (is_valid_cell(row,col) && is_valid_cell(val_row1-1,col1)){
-            ans=compute_cell(op,sheet.data[val_row1-1][col1].value,val1);
+            if(sheet.data[val_row1-1][col1].isError)
+                sheet.data[row][col].isError=true;
+            else{
+                ans=compute_cell(op,sheet.data[val_row1-1][col1].value,val1);
+                if(calc_error)
+                    sheet.data[row][col].isError=true;
+                else
+                    sheet.data[row][col].isError=false;
+            }
+            calc_error=false;
             //splitting the constant into two 16 bit variables
             int const1 = val1 & 0xFFFF;
             int const2 = (val1 >> 16) & 0xFFFF;
-            if (ans != -1){
-                op=get_op_code(op);
-                add_constraints(&sheet.data[row][col],col1,val_row1-1,const1,const2,ans,op);
-                strcpy(status, "ok");
-            }
-            else{
-                strcpy(status, "Invalid cmd");
-            }
+            
+            op=get_op_code(op);
+            add_constraints(&sheet.data[row][col],col1,val_row1-1,const1,const2,ans,op);
+            strcpy(status, "ok");
+            
         }
         else{
             strcpy(status, "Invalid cmd");
@@ -235,15 +262,29 @@ void parser(char* command){
         
 
         if (is_valid_cell(row,col) && is_valid_cell(val_row1-1,col1) && is_valid_cell(val_row2-1,col2)){
+            bool input_cell_error=false;
+            for(int i=val_row1-1;i<=val_row2-1;i++){
+                for(int j=col1;j<=col2;j++){
+                    if(sheet.data[i][j].isError) {input_cell_error=true;break;}
+                }
+                if(input_cell_error) break;
+            }
+
             char op_code=func_to_op_code(func);
-            ans=compute_range_func(op_code,val_row1-1,col1,val_row2-1,col2);
-            if (ans != -1){
-                add_constraints(&sheet.data[row][col],col1,val_row1-1,col2,val_row2-1,ans,op_code);
-                strcpy(status, "ok");
-            }
+            if(input_cell_error)
+                sheet.data[row][col].isError=true;
             else{
-                strcpy(status, "Invalid cmd");
+            ans=compute_range_func(op_code,val_row1-1,col1,val_row2-1,col2);
+            if(calc_error)
+                sheet.data[row][col].isError=true;
+            else
+                sheet.data[row][col].isError=false;
+            calc_error=false;
             }
+            add_constraints(&sheet.data[row][col],col1,val_row1-1,col2,val_row2-1,ans,op_code);
+            strcpy(status, "ok");
+            
+                
         }
         else{
             strcpy(status, "Invalid cmd");
@@ -253,6 +294,8 @@ void parser(char* command){
     else if (sscanf(command, "%[A-Z]%d=%d", ref_col, &ref_row, &val1) == 3){   
         int col = get_col(ref_col);
         int row = ref_row - 1;
+        sheet.data[row][col].isError=false;
+        calc_error=false;
         if (is_valid_cell(row,col)){
             add_constraints(&sheet.data[row][col],-1,-1,-1,-1,val1,'X');
             strcpy(status, "ok");
@@ -267,8 +310,16 @@ void parser(char* command){
         int row = ref_row - 1;
         int col1 = get_col(val_col1);
         int row1 = val_row1 - 1; 
+        sheet.data[row][col].isError=false;
+        calc_error=false;
         if (is_valid_cell(row,col) && is_valid_cell(row1,col1)){
+            if(sheet.data[row1][col1].isError)
+                sheet.data[row][col].isError=true;
+            else
+                sheet.data[row][col].isError=false;
+            
             add_constraints(&sheet.data[row][col],col1,row1,-1,-1,sheet.data[row1][col1].value,'=');
+            
             strcpy(status, "ok");
         }
         else{
@@ -279,6 +330,8 @@ void parser(char* command){
     else if (sscanf(command, "%[A-z]%d=SLEEP(%d)", ref_col, &ref_row, &val1) == 3){
         int col = get_col(ref_col);
         int row = ref_row - 1;
+        sheet.data[row][col].isError=false;
+        calc_error=false;
         if (is_valid_cell(row,col) && val1 >= 0){
             add_constraints(&sheet.data[row][col],-1,-1,-1,-1,val1,'Z');
             sleep(val1);
@@ -294,8 +347,14 @@ void parser(char* command){
         int row = ref_row - 1;
         int col1 = get_col(val_col1);
         int row1 = val_row1 - 1;
+        sheet.data[row][col].isError=false;
+        calc_error=false;
         if (is_valid_cell(row,col) && is_valid_cell(row1,col1)){
-            sleep(sheet.data[row1][col1].value);
+            if(sheet.data[row1][col1].isError)
+                sheet.data[row][col].isError=true;
+            else
+                sleep(sheet.data[row1][col1].value);
+            
             add_constraints(&sheet.data[row][col],col1,row1,-1,-1,sheet.data[row1][col1].value,'Z');
             strcpy(status, "ok");
         }

@@ -14,11 +14,20 @@
 
     int main(int argc, char *argv[]){
         if (argc != 3){
-            printf("Enter m and n values");
+            printf("Enter m and n values\n");
             return 0;
         }
         int m = atoi(argv[1]);
         int n = atoi(argv[2]);
+
+        if(m<1 || m>999){
+            printf("Enter valid number of rows , number of rows should be between 1 and 999\n");
+            return 0;
+        }
+        if(n<1 || n>18278){
+            printf("Enter valid number of columns , number of columns should be between 1 and 18,278\n");
+            return 0;
+        }
         
         double execution_time = 0.0;
         char command[30]={0};

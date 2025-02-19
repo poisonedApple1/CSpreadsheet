@@ -4,8 +4,10 @@
 #include <stdlib.h>
 
 
+
 typedef struct cell{
     int value;
+    bool isError;
     char op_code;
     short cell1_col;
     short cell1_row;
@@ -35,7 +37,7 @@ void print_table(int column_start, int row_start);
 void free_sheet();
 void remove_form_list(Cell *target,Cell *dep);
 void remove_dependency(Cell *cell);
-bool recalculate(Cell *cell);
+void recalculate(Cell *cell,bool error);
 void add_constraints(Cell *cell,short cell1_col,short cell1_row,short cell2_col,short cell2_row,int value,char op_code);
 
 
