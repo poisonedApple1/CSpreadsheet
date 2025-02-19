@@ -5,8 +5,7 @@
 #include <string.h>
 
 
-int SUM(int val_row1, int c1, int val_row2, int c2)
-{
+int SUM(int val_row1, int c1, int val_row2, int c2){
     int a = 0;
     for (int i = val_row1; i <= val_row2; i++)
     {
@@ -18,8 +17,7 @@ int SUM(int val_row1, int c1, int val_row2, int c2)
     return a;
 }
 
-int MIN(int val_row1, int c1, int val_row2, int c2)
-{
+int MIN(int val_row1, int c1, int val_row2, int c2){
     int a = pow(2, 31) - 1;
     for (int i = val_row1; i <= val_row2; i++)
     {
@@ -33,8 +31,7 @@ int MIN(int val_row1, int c1, int val_row2, int c2)
     return a;
 }
 
-int MAX(int val_row1, int c1, int val_row2, int c2)
-{
+int MAX(int val_row1, int c1, int val_row2, int c2){
     int a = 0;
     for (int i = val_row1; i <= val_row2; i++)
     {
@@ -48,8 +45,7 @@ int MAX(int val_row1, int c1, int val_row2, int c2)
     return a;
 }
 
-int AVG(int val_row1, int c1, int val_row2, int c2)
-{
+int AVG(int val_row1, int c1, int val_row2, int c2){
     int ans = 0;
     int total = SUM(val_row1, c1, val_row2, c2);
     int count = (val_row2 - val_row1 + 1) * (c2 - c1 + 1);
@@ -57,15 +53,13 @@ int AVG(int val_row1, int c1, int val_row2, int c2)
     {
         ans = total / count;
     }
-    else
-    {
+    else{
         return -1;
     }
     return ans;
 }
 
-int STDEV(int val_row1, int c1, int val_row2, int c2)
-{
+int STDEV(int val_row1, int c1, int val_row2, int c2){
     int avg = AVG(val_row1, c1, val_row2, c2);
     int total = 0;
     for (int i = val_row1; i <= val_row2; i++)

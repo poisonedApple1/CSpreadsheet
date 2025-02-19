@@ -20,6 +20,7 @@ void initialise_sheet(int m, int n)
         for (int j = 0; j < n; j++)
         {
             sheet.data[i][j].value = 0;
+            sheet.data[i][j].isError = false;
             sheet.data[i][j].op_code = 'X';
             sheet.data[i][j].cell1_col = -1;
             sheet.data[i][j].cell1_row = -1;
@@ -85,9 +86,9 @@ void print_table(int column_start, int row_start)
     for (int i = row_start; i < display_row_number; i++)
     {
         printf("%*d", space, i + 1);
-        for (int j = column_start; j < display_column_number; j++)
-        {
-            printf("%*d", space, sheet.data[i][j].value);
+        for (int j = column_start; j < display_column_number; j++){
+            if(sheet.data[i][j].isError)printf("       ERR");
+            else printf("%*d", space, sheet.data[i][j].value);
         }
         printf("\n");
     }
@@ -163,96 +164,78 @@ void remove_dependency(Cell *cell)
     u -> const*cell or cell*const
     d -> const/cell or cell/const
     */
-
-bool recalculate(Cell *cell)
-{
-    // returns false if error in calculation
-    if (cell == NULL)
-        return true;
-    int ans = -1;
-    switch (cell->op_code)
-    {
-    case '=':
-        ans = sheet.data[cell->cell1_row][cell->cell1_col].value;
-        break;
-    case '+':
-        ans = compute_cell(cell->op_code, sheet.data[cell->cell1_row][cell->cell1_col].value, sheet.data[cell->cell2_row][cell->cell2_col].value);
-        break;
-    case '-':
-        ans = compute_cell(cell->op_code, sheet.data[cell->cell1_row][cell->cell1_col].value, sheet.data[cell->cell2_row][cell->cell2_col].value);
-        break;
-    case '*':
-        ans = compute_cell(cell->op_code, sheet.data[cell->cell1_row][cell->cell1_col].value, sheet.data[cell->cell2_row][cell->cell2_col].value);
-        break;
-    case '/':
-        ans = compute_cell(cell->op_code, sheet.data[cell->cell1_row][cell->cell1_col].value, sheet.data[cell->cell2_row][cell->cell2_col].value);
-        break;
-    case 'p':
-        ans = compute_cell('+', sheet.data[cell->cell1_row][cell->cell1_col].value, cell->cell2_col + cell->cell2_row * pow(2, 16));
-        break;
-    case 's':
-        ans = compute_cell('-', sheet.data[cell->cell1_row][cell->cell1_col].value, cell->cell2_col + cell->cell2_row * pow(2, 16));
-        break;
-    case 'u':
-        ans = compute_cell('*', sheet.data[cell->cell1_row][cell->cell1_col].value, cell->cell2_col + cell->cell2_row * pow(2, 16));
-        break;
-    case 'd':
-        ans = compute_cell('/', sheet.data[cell->cell1_row][cell->cell1_col].value, cell->cell2_col + cell->cell2_row * pow(2, 16));
-        if (ans == -1)
-            return false;
-        break;
-    case 'Z':
-        ans = sheet.data[cell->cell1_row][cell->cell1_col].value;
-        sleep(ans);
-        break;
-    case 'S':
-        ans = compute_range_func(cell->op_code, cell->cell1_row, cell->cell1_col, cell->cell2_row, cell->cell2_col);
-        break;
-    case 'm':
-        ans = compute_range_func(cell->op_code, cell->cell1_row, cell->cell1_col, cell->cell2_row, cell->cell2_col);
-        break;
-    case 'M':
-        ans = compute_range_func(cell->op_code, cell->cell1_row, cell->cell1_col, cell->cell2_row, cell->cell2_col);
-        break;
-    case 'A':
-        ans = compute_range_func(cell->op_code, cell->cell1_row, cell->cell1_col, cell->cell2_row, cell->cell2_col);
-        break;
-    case 'D':
-        ans = compute_range_func(cell->op_code, cell->cell1_row, cell->cell1_col, cell->cell2_row, cell->cell2_col);
-        break;
-    case 'X':
-        return true;
+   
+   
+void recalculate(Cell *cell,bool isError){
+       //if we find error in one cell, we make error false such that the cells depending on this cell also show error
+    if(cell == NULL) return ;
+    cell->isError=isError;
+    int ans=-1;
+    if(!isError){
+        switch(cell->op_code){
+            case '=':
+                ans=sheet.data[cell->cell1_row][cell->cell1_col].value;
+                calc_error=false;
+                break;
+            case '+':  
+            case '-':
+            case '*':
+            case '/':
+                int val1=sheet.data[cell->cell1_row][cell->cell1_col].value;
+                int val2=sheet.data[cell->cell2_row][cell->cell2_col].value;
+                ans=compute_cell(cell->op_code,val1,val2);
+                if(calc_error) cell->isError=true;
+                else cell->isError=false;
+                break;
+            case 'p':
+            case 's':
+            case 'u':
+            case 'd':
+                int val=cell->cell2_col + cell->cell2_row* pow(2,16);
+                char op_code=get_op_code_rev(cell->op_code);
+                ans=compute_cell(op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,val);
+                if(calc_error) cell->isError=true;
+                else cell->isError=false;
+                cell->value=ans;
+                break;
+            case 'Z':
+                ans=sheet.data[cell->cell1_row][cell->cell1_col].value;
+                sleep(ans);
+                break;
+            case 'S':
+            case 'm':
+            case 'M':
+            case 'A':
+            case 'D':
+                ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);
+                if(calc_error) cell->isError=true;
+                else cell->isError=false;
+                break;
+            default:
+                return ;
+        }
+        cell->value=ans;
     }
-    if (ans == -1)
-        return false;
-    cell->value = ans;
-    Node *temp = cell->dependencies;
 
-    bool result = true;
-    while (temp != NULL)
-    {
-        result = result && recalculate(temp->data);
-        if (!result)
-            return false;
+    Node *temp = cell->dependencies;
+    while(temp!=NULL){
+        recalculate(temp->data,cell->isError);
         temp = temp->next;
     }
-    return true;
+    return ;
 }
-
-void add_constraints(Cell *cell, short cell1_col, short cell1_row, short cell2_col, short cell2_row, int value, char op_code)
-{
+    
+void add_constraints(Cell *cell,short cell1_col,short cell1_row,short cell2_col,short cell2_row,int value,char op_code){
     remove_dependency(cell);
     cell->cell1_col = cell1_col;
     cell->cell1_row = cell1_row;
     cell->cell2_col = cell2_col;
     cell->cell2_row = cell2_row;
-
-    if (op_code == 'S' || op_code == 'm' || op_code == 'M' || op_code == 'A' || op_code == 'D')
-    {
-        for (int i = cell1_row; i <= cell2_row; i++)
-        {
-            for (int j = cell1_col; j <= cell2_col; j++)
-            {
+    cell->op_code = op_code;
+        
+    if(op_code=='S' || op_code=='m' || op_code=='M' || op_code=='A' || op_code=='D'){
+        for(int i=cell1_row;i<=cell2_row;i++){
+            for(int j=cell1_col;j<=cell2_col;j++){ 
                 Node *new_node = malloc(sizeof(Node));
                 new_node->data = cell;
                 new_node->next = sheet.data[i][j].dependencies; // Insert at the head
@@ -261,36 +244,25 @@ void add_constraints(Cell *cell, short cell1_col, short cell1_row, short cell2_c
             }
         }
     }
-    else
-    {
-        if (cell1_col != -1)
-        {
-            Node *temp = malloc(sizeof(Node));
-            temp->data = cell;
-            temp->next = sheet.data[cell1_row][cell1_col].dependencies;
-            sheet.data[cell1_row][cell1_col].dependencies = temp;
-
-            // sheet.data[cell1_row][cell1_col].dependencies[sheet.data[cell1_row][cell1_col].dep_count] = cell;
-            sheet.data[cell1_row][cell1_col].dep_count++;
-        }
-        if (cell2_col != -1 && op_code != 'p' && op_code != 's' && op_code != 'u' && op_code != 'd')
-        {
-            Node *temp = malloc(sizeof(Node));
-            temp->data = cell;
-            temp->next = sheet.data[cell2_row][cell2_col].dependencies;
-            sheet.data[cell2_row][cell2_col].dependencies = temp;
-
-            // sheet.data[cell2_row][cell2_col].dependencies[sheet.data[cell2_row][cell2_col].dep_count] = cell;
-            sheet.data[cell2_row][cell2_col].dep_count++;
-        }
+    if(cell1_col!=-1){  
+        Node *temp = malloc(sizeof(Node));
+        temp->data = cell;
+        temp->next = sheet.data[cell1_row][cell1_col].dependencies;
+        sheet.data[cell1_row][cell1_col].dependencies = temp;
+        sheet.data[cell1_row][cell1_col].dep_count++;
+    }
+    if(cell2_col!=-1&&op_code!='p' && op_code!= 's' && op_code != 'u' && op_code!='d'){
+        Node *temp = malloc(sizeof(Node));
+        temp->data = cell;
+        temp->next = sheet.data[cell2_row][cell2_col].dependencies;
+        sheet.data[cell2_row][cell2_col].dependencies = temp;
+        sheet.data[cell2_row][cell2_col].dep_count++;
     }
 
     cell->value = value;
-    cell->op_code = op_code;
     Node *temp = cell->dependencies;
-    while (temp != NULL)
-    {
-        recalculate(temp->data);
+    while(temp!=NULL){  
+        recalculate(temp->data,cell->isError);
         temp = temp->next;
     }
 }

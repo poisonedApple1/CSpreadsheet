@@ -10,4 +10,5 @@ handle circular errors in graph
 
 make the recalculations recursive
 
+dont detect ans right or wrong by using ans==-1
 
