@@ -9,8 +9,8 @@
 #include <math.h>
 Sheet sheet;
 
-void initialise_sheet(int m, int n)
-{
+
+void initialise_sheet(int m, int n){
     sheet.rows = m;
     sheet.cols = n;
     sheet.data = malloc(m * sizeof(Cell *));
@@ -22,12 +22,11 @@ void initialise_sheet(int m, int n)
             sheet.data[i][j].value = 0;
             sheet.data[i][j].isError = false;
             sheet.data[i][j].op_code = 'X';
-            sheet.data[i][j].cell1_col = -1;
-            sheet.data[i][j].cell1_row = -1;
-            sheet.data[i][j].cell2_col = -1;
-            sheet.data[i][j].cell2_row = -1;
+            sheet.data[i][j].cell1.col = -1;
+            sheet.data[i][j].cell1.row = -1;
+            sheet.data[i][j].cell2.col = -1;
+            sheet.data[i][j].cell2.row = -1;
             sheet.data[i][j].dep_count = 0;
-            // allocating  dependencies list as NULL
             sheet.data[i][j].dependencies = NULL;
         }
     }
@@ -94,58 +93,96 @@ void print_table(int column_start, int row_start)
     }
 }
 
-void free_sheet()
+// void free_sheet()
+// {
+//     for (int i = 0; i < sheet.rows; i++)
+//     {
+//         for (int j = 0; j < sheet.cols; j++)
+//         {
+//             Node *temp = sheet.data[i][j].dependencies;
+//             while (temp != NULL)
+//             {
+//                 Node *temp2 = temp->next;
+//                 free(temp);
+//                 temp = temp2;
+//             }
+//         }
+//         free(sheet.data[i]);
+//     }
+//     free(sheet.data);
+// }
+
+void remove_from_list(Cell *target, int delete_cell)
 {
-    for (int i = 0; i < sheet.rows; i++)
-    {
-        for (int j = 0; j < sheet.cols; j++)
-        {
-            Node *temp = sheet.data[i][j].dependencies;
-            while (temp != NULL)
-            {
-                Node *temp2 = temp->next;
-                free(temp);
-                temp = temp2;
+    dependency_node *curr = (target->dependencies);
+    dependency_node *prev = NULL;
+    while (curr != NULL){
+        if (curr->data == delete_cell){
+            if(prev == NULL){
+                target->dependencies = curr->next;
             }
-        }
-        free(sheet.data[i]);
-    }
-    free(sheet.data);
-}
-
-void remove_from_list(Cell *target, Cell *dep)
-{                                          // remove dependency from list of target cell
-    Node **curr = &(target->dependencies); // Pointer to head of list
-    while (*curr != NULL)
-    {
-        if ((*curr)->data == dep)
-        {
-            Node *temp = *curr;
-            *curr = temp->next; // Unlink the node
-            free(temp);         // Free only the node, not temp->data
+            else{
+                prev->next = curr->next;
+            }
+            free(curr);
             target->dep_count--;
-            break; // Exit after removing the first match
+            return;
         }
-        curr = &((*curr)->next); // Move to the next node
+        prev = curr;
+        curr = curr->next;
+    }
+    target->dep_count--;
+    return;
+}
+
+void insert_into_list(Cell *target, int insert_cell){
+    dependency_node *new_node = (dependency_node *)malloc(sizeof(dependency_node));
+    new_node->data = insert_cell;
+    new_node->next=target->dependencies;
+    target->dependencies=new_node;
+    target->dep_count++;
+    return;
+}
+
+//dfs to find indegree 0 node
+avl_node* dfs(avl_node *root){
+    if(root==NULL) return NULL;
+    if(root->indegree==0){
+        return root;
+    }
+    else{
+        avl_node *left = dfs(root->left);
+        avl_node *right = dfs(root->right);
+        if(right!=NULL) return right;
+        else if(left!=NULL) return left;
+        else return NULL;
     }
 }
 
-void remove_dependency(Cell *cell)
-{
-    /*removes the cell from dependency array of cell1 and cell2*/
-    if (cell->cell1_col == -1)
-        return;
-    Cell *cell1 = &sheet.data[cell->cell1_row][cell->cell1_col];
-    remove_from_list(cell1, cell);
-    if (cell->cell2_col == -1)
-        return;
-    Cell *cell2 = &sheet.data[cell->cell2_row][cell->cell2_col];
-    remove_from_list(cell2, cell);
-    cell->cell1_col = -1;
-    cell->cell1_row = -1;
-    cell->cell2_col = -1;
-    cell->cell2_row = -1;
+
+queue* topological_sort(avl_tree *tree){
+    queue *q = NULL;
+    avl_node *indegree_0_node = dfs(tree->root);
+    q=push(q,indegree_0_node);
+    queue *final_sorted=NULL;
+    while(!is_empty(q)){
+        avl_node *node = front(q);
+        q=pop(q);
+        printf("%d ",node->data);
+        final_sorted=push(final_sorted,node);
+        dependency_node *curr = sheet.data[node->data%1000][node->data/1000].dependencies;
+        while(curr!=NULL){
+            avl_node *temp = avl_find(tree,curr->data);
+            temp->indegree--;
+            if(temp->indegree==0){
+                q=push(q,temp);
+            }
+            curr=curr->next;
+        }
+    }   
+    return final_sorted;
 }
+
 /*
     = ->cell
     + -> cell+cell
@@ -163,118 +200,172 @@ void remove_dependency(Cell *cell)
     s -> const-cell or cell-const
     u -> const*cell or cell*const
     d -> const/cell or cell/const
-    */
+*/
    
    
-void recalculate(Cell *cell,bool isError){
-       //if we find error in one cell, we make error false such that the cells depending on this cell also show error
-    if(cell == NULL) return ;
-    cell->isError=isError;
-    int ans=-1;
-    if(!isError){
-        switch(cell->op_code){
-            case '=':
-                ans=sheet.data[cell->cell1_row][cell->cell1_col].value;
-                calc_error=false;
-                break;
-            case '+':  
-            case '-':
-            case '*':
-            case '/':
-                int val1=sheet.data[cell->cell1_row][cell->cell1_col].value;
-                int val2=sheet.data[cell->cell2_row][cell->cell2_col].value;
-                ans=compute_cell(cell->op_code,val1,val2);
-                if(calc_error) cell->isError=true;
-                else cell->isError=false;
-                break;
-            case 'p':
-            case 's':
-            case 'u':
-            case 'd':
-                int val=cell->cell2_col + cell->cell2_row* pow(2,16);
-                char op_code=get_op_code_rev(cell->op_code);
-                ans=compute_cell(op_code,sheet.data[cell->cell1_row][cell->cell1_col].value,val);
-                if(calc_error) cell->isError=true;
-                else cell->isError=false;
-                cell->value=ans;
-                break;
-            case 'Z':
-                ans=sheet.data[cell->cell1_row][cell->cell1_col].value;
-                sleep(ans);
-                break;
-            case 'S':
-            case 'm':
-            case 'M':
-            case 'A':
-            case 'D':
-                ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);
-                if(calc_error) cell->isError=true;
-                else cell->isError=false;
-                break;
-            default:
-                return ;
-        }
-        cell->value=ans;
-    }
+// void recalculate(Cell *cell,bool isError){
+//        //if we find error in one cell, we make error false such that the cells depending on this cell also show error
+//     if(cell == NULL) return ;
+//     cell->isError=isError;
+//     int ans=-1;
+//     if(!isError){
+//         switch(cell->op_code){
+//             case '=':
+//                 ans=sheet.data[cell->cell1.row][cell->cell1.col].value;
+//                 calc_error=false;
+//                 break;
+//             case '+':  
+//             case '-':
+//             case '*':
+//             case '/':
+//                 int val1=sheet.data[cell->cell1.row][cell->cell1.col].value;
+//                 int val2=sheet.data[cell->cell2.row][cell->cell2.col].value;
+//                 ans=compute_cell(cell->op_code,val1,val2);
+//                 if(calc_error) cell->isError=true;
+//                 else cell->isError=false;
+//                 break;
+//             case 'p':
+//             case 's':
+//             case 'u':
+//             case 'd':
+//                 int val=cell->cell2_col + cell->cell2_row* pow(2,16);
+//                 char op_code=get_op_code_rev(cell->op_code);
+//                 ans=compute_cell(op_code,sheet.data[cell->cell1.row][cell->cell1.col].value,val);
+//                 if(calc_error) cell->isError=true;
+//                 else cell->isError=false;
+//                 cell->value=ans;
+//                 break;
+//             case 'Z':
+//                 ans=sheet.data[cell->cell1.row][cell->cell1.col].value;
+//                 sleep(ans);
+//                 break;
+//             case 'S':
+//             case 'm':
+//             case 'M':
+//             case 'A':
+//             case 'D':
+//                 ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);
+//                 if(calc_error) cell->isError=true;
+//                 else cell->isError=false;
+//                 break;
+//             default:
+//                 return ;
+//         }
+//         cell->value=ans;
+//     }
 
-    Node *temp = cell->dependencies;
-    while(temp!=NULL){
-        recalculate(temp->data,cell->isError);
-        temp = temp->next;
-    }
-    return ;
-}
+//     Node *temp = cell->dependencies;
+//     while(temp!=NULL){
+//         recalculate(temp->data,cell->isError);
+//         temp = temp->next;
+//     }
+//     return ;
+// }
 
-void add_to_stack(stack *head,Cell *cell){
-    push(head,cell);
-    Node *temp = cell->dependencies;
-    while(temp!=NULL){
-        add_to_stack(head,temp->data);
-        temp = temp->next;
-    }
-}
-
-void topological_sort(stack *head){
-    
-}
-    
-void add_constraints(Cell *cell,short cell1_col,short cell1_row,short cell2_col,short cell2_row,int value,char op_code){
-    remove_dependency(cell);
-    cell->cell1_col = cell1_col;
-    cell->cell1_row = cell1_row;
-    cell->cell2_col = cell2_col;
-    cell->cell2_row = cell2_row;
-    cell->op_code = op_code;
-        
-    if(op_code=='S' || op_code=='m' || op_code=='M' || op_code=='A' || op_code=='D'){
-        for(int i=cell1_row;i<=cell2_row;i++){
-            for(int j=cell1_col;j<=cell2_col;j++){ 
-                Node *new_node = malloc(sizeof(Node));
-                new_node->data = cell;
-                new_node->next = sheet.data[i][j].dependencies; // Insert at the head
-                sheet.data[i][j].dependencies = new_node;
-                sheet.data[i][j].dep_count++;
+void remove_dependency(cell_info cell){
+    Cell * curr_cell = &sheet.data[cell.row][cell.col];
+    switch(curr_cell->op_code){
+        case 'X':
+            break;
+        case '=':
+        case 'p':
+        case 's':
+        case 'u':
+        case 'd':
+        case 'Z':
+            remove_from_list(&sheet.data[curr_cell->cell1.row][curr_cell->cell1.col],cell.col*1000+cell.row);
+            break;
+        case 'S':
+        case 'm':
+        case 'M':
+        case 'A':
+        case 'D':
+            for(int i=curr_cell->cell1.row;i<=curr_cell->cell2.row;i++){
+                for(int j=curr_cell->cell1.col;j<=curr_cell->cell2.col;j++){
+                    remove_from_list(&sheet.data[i][j],cell.col*1000+cell.row);
+                }
             }
-        }
+            break;
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+            remove_from_list(&sheet.data[curr_cell->cell1.row][curr_cell->cell1.col],cell.col*1000+cell.row);
+            remove_from_list(&sheet.data[curr_cell->cell2.row][curr_cell->cell2.col],cell.col*1000+cell.row);
+            break;
     }
-    if(cell1_col!=-1){  
-        Node *temp = malloc(sizeof(Node));
-        temp->data = cell;
-        temp->next = sheet.data[cell1_row][cell1_col].dependencies;
-        sheet.data[cell1_row][cell1_col].dependencies = temp;
-        sheet.data[cell1_row][cell1_col].dep_count++;
+    curr_cell->cell1.col = -1;
+    curr_cell->cell1.row = -1;
+    curr_cell->cell2.col = -1;
+    curr_cell->cell2.row = -1;
+}
+
+void add_to_tree(avl_tree *head,cell_info cell){
+    if(sheet.data[cell.row][cell.col].dependencies==NULL){
+        return;
     }
-    if(cell2_col!=-1&&op_code!='p' && op_code!= 's' && op_code != 'u' && op_code!='d'){
-        Node *temp = malloc(sizeof(Node));
-        temp->data = cell;
-        temp->next = sheet.data[cell2_row][cell2_col].dependencies;
-        sheet.data[cell2_row][cell2_col].dependencies = temp;
-        sheet.data[cell2_row][cell2_col].dep_count++;
+    dependency_node *curr = sheet.data[cell.row][cell.col].dependencies;
+    while(curr!=NULL){
+        cell_info temp = {curr->data%1000,curr->data/1000};
+        avl_insert(head,curr->data);
+        add_to_tree(head,temp);
+        curr=curr->next;
+    }
+}
+
+// void topological_sort(stack *head){
+    
+// }
+    
+void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int value,char op_code){
+    Cell *cell = &sheet.data[curr_cell.row][curr_cell.col];
+    cell_info curr_cell_info = {curr_cell.col,curr_cell.row};
+    remove_dependency(curr_cell_info);
+    cell->cell1 = cell1;
+    cell->cell2 = cell2;
+    cell->op_code = op_code;
+    int curr_cell_row_col = curr_cell.col*1000+curr_cell.row;
+    switch(op_code){
+        case 'X':
+            break;
+        case '=':
+        case 'p':
+        case 's':
+        case 'u':
+        case 'd':
+        case 'Z':
+            insert_into_list(&sheet.data[cell1.row][cell1.col],curr_cell_row_col);
+            break;
+        case 'S':
+        case 'm':
+        case 'M':
+        case 'A':
+        case 'D':
+            for(int i=cell1.row;i<=cell2.row;i++){
+                for(int j=cell1.col;j<=cell2.col;j++){
+                    insert_into_list(&sheet.data[i][j],curr_cell_row_col);
+                }
+            }
+            break;
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+            insert_into_list(&sheet.data[cell1.row][cell1.col],curr_cell_row_col);
+            insert_into_list(&sheet.data[cell2.row][cell2.col],curr_cell_row_col);
+            break;
     }
 
+    cell->cell1.col = cell1.col;
+    cell->cell1.row = cell1.row;
+    cell->cell2.col = cell2.col;
+    cell->cell2.row = cell2.row;
     cell->value = value;
-    stack *head = NULL;
-    add_to_stack(head,cell);
-    //iss stack ke saath avl tree bnana h
-    //topological_sort()
+    avl_tree *tree = avl_create();
+    avl_insert(tree,curr_cell_row_col);
+    tree->root->indegree=0;
+    add_to_tree(tree,curr_cell_info);
+
+    pretty_print(tree);
+    queue *sorted = topological_sort(tree);
 }

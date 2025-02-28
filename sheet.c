@@ -49,7 +49,7 @@
             printf("[%.1f] (%s) >", execution_time, status);
 
         }
-        free_sheet();
+        // free_sheet();
         return 0;
     }
 

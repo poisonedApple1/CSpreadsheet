@@ -2,50 +2,39 @@
 #include <stdlib.h>
 #include <string.h> 
 #include <stdbool.h>
+#include "avl.h"
+#include  "utils.h"
 
-int max(int a, int b) { return (a > b) ? a : b; }
 
-struct avl_node {
-    struct avl_node *left;
-    struct avl_node *right;
-    int data;
-    int height;  
-};
-typedef struct avl_node avl_node_td;  //typedef for avl_node
 
-struct avl_tree {
-    avl_node_td *root;
-};
-
-typedef struct avl_tree avl_tree_td;
-
-int height(avl_node_td *node) {
+int height(avl_node *node) {
     return node ? node->height : 0;
 }
 
-avl_tree_td *avl_create() {
-    avl_tree_td *tree = NULL;
-    if((tree = malloc(sizeof(avl_tree_td))) == NULL) {
+avl_tree *avl_create() {
+    avl_tree *tree = NULL;
+    if((tree = malloc(sizeof(avl_tree))) == NULL) {
         return NULL;
     }
     tree->root = NULL;
     return tree;
 } 
-avl_node_td *avl_create_node(int value) {
-    avl_node_td *node = NULL;
-    if((node = malloc(sizeof(avl_node_td))) == NULL) {
+avl_node *avl_create_node(int value) {
+    avl_node *node = NULL;
+    if((node = malloc(sizeof(avl_node))) == NULL) {
         return NULL;
     }
     node->data = value;
     node->left = node->right = NULL;
     node->height = 1;  
+    node->indegree = 1;
     return node;
 }
 
 // Right rotation.
-avl_node_td *rotateRight(avl_node_td *y) {
-    avl_node_td *x = y->left;
-    avl_node_td *T2 = x->right;
+avl_node *rotateRight(avl_node *y) {
+    avl_node *x = y->left;
+    avl_node *T2 = x->right;
     // Perform rotation.
     x->right = y;
     y->left = T2;
@@ -55,9 +44,9 @@ avl_node_td *rotateRight(avl_node_td *y) {
 }
 
 // Left rotation.
-avl_node_td *rotateLeft(avl_node_td *x) {
-    avl_node_td *y = x->right;
-    avl_node_td *T2 = y->left;
+avl_node *rotateLeft(avl_node *x) {
+    avl_node *y = x->right;
+    avl_node *T2 = y->left;
     // Perform rotation.
     y->left = x;
     x->right = T2;
@@ -66,17 +55,20 @@ avl_node_td *rotateLeft(avl_node_td *x) {
     return y;
 }
  
-int getBalance(avl_node_td *node) {
+int getBalance(avl_node *node) {
     return node ? height(node->left) - height(node->right) : 0;
 }
  
-avl_node_td *avl_insert_node(avl_node_td *node, int value) { 
+avl_node *avl_insert_node(avl_node *node, int value) { 
     if (node == NULL)               return avl_create_node(value);
     
     if (value < node->data)        node->left = avl_insert_node(node->left, value);
     else if (value > node->data)   node->right = avl_insert_node(node->right, value);
-    else                            return node;  //already present
-     
+    else {                           
+    //already present
+    node->indegree++;
+    return node;
+    }
     node->height = max(height(node->left), height(node->right)) + 1;
     int balance = getBalance(node);
      
@@ -101,19 +93,19 @@ avl_node_td *avl_insert_node(avl_node_td *node, int value) {
     return node;
 }
  
-void avl_insert(avl_tree_td *tree, int value) {
+void avl_insert(avl_tree *tree, int value) {
     tree->root = avl_insert_node(tree->root, value);
 }
 
 //Find the node with the minimum value.
-avl_node_td *min_val_node(avl_node_td *node) {
-    avl_node_td *current = node;
+avl_node *min_val_node(avl_node *node) {
+    avl_node *current = node;
     while (current && current->left != NULL)
         current = current->left;
     return current;
 }
  
-avl_node_td *avl_delete_node(avl_node_td *root, int value) { 
+avl_node *avl_delete_node(avl_node *root, int value) { 
     if (root == NULL)               return root;
     
     if (value < root->data)        root->left = avl_delete_node(root->left, value);
@@ -125,19 +117,19 @@ avl_node_td *avl_delete_node(avl_node_td *root, int value) {
             return NULL;
         }
         else if(root->left==NULL){
-            avl_node_td *temp = root->right;
+            avl_node *temp = root->right;
             root->right = NULL;
             free(root);
             return temp;
         }
         else if(root->right==NULL){
-            avl_node_td *temp = root->left;
+            avl_node *temp = root->left;
             root->left = NULL;
             free(root);
             return temp;
         }
         else{
-            avl_node_td *temp = min_val_node(root->right);
+            avl_node *temp = min_val_node(root->right);
             root->data = temp->data;
             root->right = avl_delete_node(root->right, temp->data);
         } 
@@ -170,91 +162,94 @@ avl_node_td *avl_delete_node(avl_node_td *root, int value) {
     return root;
 }
  
-void avl_delete(avl_tree_td *tree, int value) {
+void avl_delete(avl_tree *tree, int value) {
     tree->root = avl_delete_node(tree->root, value);
 }
 
-bool avl_find(avl_tree_td *tree, int value){
-    avl_node_td *cur = tree->root;
-    while (cur && cur->data != value) {
+avl_node *avl_find(avl_tree *tree, int value){
+    avl_node *cur = tree->root;
+    while (cur) {
         if (value > cur->data)
             cur = cur->right;
-        else
+        else if (value < cur->data)
             cur = cur->left;
+        else
+            return cur;
     }
-    return cur != NULL;
+    return NULL;
 }
 
 
+
 // just for better printing the tree in the console
-void print_tree_helper(avl_node_td *node, const char *prefix, int isLeft) {
+void print_tree_helper(avl_node *node, const char *prefix, int isLeft) {
     if (node != NULL) {
         printf("%s", prefix);
         printf(isLeft ? "+-- " : "`-- ");
-        printf("%d\n", node->data);
+        printf("%d(%d)\n", node->data,node->indegree);
         char newPrefix[256];
         snprintf(newPrefix, sizeof(newPrefix), "%s%s", prefix, isLeft ? "|   " : "    ");
         print_tree_helper(node->left, newPrefix, 1);
         print_tree_helper(node->right, newPrefix, 0);
     }
 }
-void pretty_print(avl_tree_td *tree) {
+void pretty_print(avl_tree *tree) {
     if (tree->root == NULL) {
         printf("Tree is empty.\n");
         return;
     }
-    printf("%d\n", tree->root->data);
+    printf("%d(%d)\n", tree->root->data,tree->root->indegree);
     printf("|\n");
     print_tree_helper(tree->root->left, "", 1);
     print_tree_helper(tree->root->right, "", 0);
 }
 
  
-int main() {
-    avl_tree_td *tree = avl_create(); 
-    avl_insert(tree,1);
-    pretty_print(tree);
-    avl_insert(tree,2);
-    pretty_print(tree );
-    avl_insert(tree,3);
-    pretty_print(tree );
-    avl_insert(tree,4);
-    pretty_print(tree );
-    avl_insert(tree,5);
-    pretty_print(tree );
-    avl_insert(tree,6);
-    pretty_print(tree );
-    avl_insert(tree,7);
+// int main() {
+//     avl_tree *tree = avl_create(); 
+//     avl_insert(tree,1);
+//     pretty_print(tree);
+//     avl_insert(tree,2);
+//     pretty_print(tree );
+//     avl_insert(tree,3);
+//     pretty_print(tree );
+//     avl_insert(tree,4);
+//     pretty_print(tree );
+//     avl_insert(tree,5);
+//     pretty_print(tree );
+//     avl_insert(tree,6);
+//     pretty_print(tree );
+//     avl_insert(tree,7);
     
-    avl_insert(tree,8);
-    pretty_print(tree );
-    avl_insert(tree,9);
-    pretty_print(tree );
-    avl_insert(tree,10);
-    pretty_print(tree);
-    avl_insert(tree,11);
-    pretty_print(tree );
-    avl_insert(tree,12);
-    pretty_print(tree);
-    avl_insert(tree,13);
-    pretty_print(tree );
-    avl_insert(tree,14);
-    pretty_print(tree ); 
-    avl_insert(tree,5);
-    pretty_print(tree );
-    avl_insert(tree,-1);
-    printf("After inserting -1\n");
-    pretty_print(tree );
-    avl_delete(tree,0);
-    printf("After deleting 0\n");
-    pretty_print(tree );
-    avl_delete(tree,1);
-    printf("After deleting 1\n");
-    pretty_print(tree );
-    avl_delete(tree,2);
-    printf("After deleting 2\n");
-    pretty_print(tree );
+//     avl_insert(tree,8);
+//     pretty_print(tree );
+//     avl_insert(tree,9);
+//     pretty_print(tree );
+//     avl_insert(tree,10);
+//     pretty_print(tree);
+//     avl_insert(tree,11);
+//     pretty_print(tree );
+//     avl_insert(tree,12);
+//     pretty_print(tree);
+//     avl_insert(tree,13);
+//     pretty_print(tree );
+//     avl_insert(tree,14);
+//     pretty_print(tree ); 
+//     avl_insert(tree,5);
+//     pretty_print(tree );
+//     avl_insert(tree,-1);
+//     printf("After inserting -1\n");
+//     pretty_print(tree );
+//     avl_delete(tree,0);
+//     printf("After deleting 0\n");
+//     pretty_print(tree );
+//     avl_delete(tree,1);
+//     printf("After deleting 1\n");
+//     pretty_print(tree );
+//     avl_delete(tree,2);
+//     printf("After deleting 2\n");
+//     pretty_print(tree );
 
     
-    return 0;
-}
+//     return 0;
+// }

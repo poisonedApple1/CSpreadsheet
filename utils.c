@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "sheet_functions.h"
 #include <stdbool.h>
+#include "avl.h"
 
 int min(int a, int b){
     return (a < b) ? a : b;
@@ -14,42 +15,39 @@ bool is_valid_cell(int row, int col){
     return (row >= 0 && row < sheet.rows && col >= 0 && col < sheet.cols);
 }
 
-//stack implementation
-typedef struct stack {
-    Cell *cell;
-    struct stack *next;
-} stack;
+//queue implementation
 
-stack *create_node(Cell *cell){
-    stack *new_node = (stack *)malloc(sizeof(stack));
-    new_node->cell = cell;
+
+queue *create_node(avl_node *node){
+    queue *new_node = (queue *)malloc(sizeof(queue));
+    new_node->node = node;
     new_node->next = NULL;
     return new_node;
 }
 
-void push(stack *head, Cell *new_node){
-    if (head == NULL){
-        head = create_node(new_node);
+queue *push(queue *head, avl_node *node){
+    queue *temp = head;
+    if(temp==NULL){
+        return create_node(node);
     }
-    else{
-        stack *temp = head;
-        while (temp->next != NULL){
-            temp = temp->next;
-        }
-        temp->next = create_node(new_node);
+    while(temp->next!=NULL){
+        temp=temp->next;
     }
+    temp->next = create_node(node);
+    return head;
 }
 
-Cell *top(struct stack *head){
-    return head->cell;
+
+avl_node *front(queue *head){
+    return head->node;
 }
 
-void pop(stack *head){
-    stack *temp = head;
-    head = head->next;
-    free(temp);
+queue *pop(queue *head){
+    queue *temp = head->next;
+    free(head);
+    return temp;
 }
 
-bool is_empty(stack *head){
+bool is_empty(queue *head){
     return head == NULL;
 }

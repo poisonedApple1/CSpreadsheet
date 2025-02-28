@@ -176,7 +176,10 @@ void parser(char* command){
             }
             op='X';
             calc_error=false;
-            add_constraints(&sheet.data[row][col],-1,-1,-1,-1,ans,op);
+            cell_info cell = {row,col};
+            cell_info cell1 = {-1,-1};
+            cell_info cell2 = {-1,-1};
+            add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
         }
         else
@@ -202,8 +205,10 @@ void parser(char* command){
                     sheet.data[row][col].isError=false;
             }
             calc_error=false;
-            
-            add_constraints(&sheet.data[row][col],col1,val_row1-1,col2,val_row2-1,ans,op);
+            cell_info cell = {row,col};
+            cell_info cell1 = {val_row1-1,col1};
+            cell_info cell2 = {val_row2-1,col2};
+            add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
             
         }
@@ -240,7 +245,10 @@ void parser(char* command){
             int const2 = (val1 >> 16) & 0xFFFF;
           
             op=get_op_code(op);
-            add_constraints(&sheet.data[row][col],col1,val_row1-1,const1,const2,ans,op);
+            cell_info cell = {row,col};
+            cell_info cell1 = {val_row1-1,col1};
+            cell_info cell2 = {const1,const2};
+            add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
             
         }
@@ -272,7 +280,10 @@ void parser(char* command){
             int const2 = (val1 >> 16) & 0xFFFF;
             
             op=get_op_code(op);
-            add_constraints(&sheet.data[row][col],col1,val_row1-1,const1,const2,ans,op);
+            cell_info cell = {row,col};
+            cell_info cell1 = {val_row1-1,col1};
+            cell_info cell2 = {const1,const2};
+            add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
             
         }
@@ -310,7 +321,10 @@ void parser(char* command){
                 sheet.data[row][col].isError=false;
             calc_error=false;
             }
-            add_constraints(&sheet.data[row][col],col1,val_row1-1,col2,val_row2-1,ans,op_code);
+            cell_info cell1 = {val_row1-1,col1};
+            cell_info cell2 = {val_row2-1,col2};
+            cell_info cell = {row,col};
+            add_constraints(cell,cell1,cell2,ans,op_code);
             strcpy(status, "ok");
             
                 
@@ -328,7 +342,10 @@ void parser(char* command){
         sheet.data[row][col].isError=false;
         calc_error=false;
         if (is_valid_cell(row,col)){
-            add_constraints(&sheet.data[row][col],-1,-1,-1,-1,val1,'X');
+            cell_info cell = {row,col};
+            cell_info cell1 = {-1,-1};
+            cell_info cell2 = {-1,-1};
+            add_constraints(cell,cell1,cell2,val1,'X');
             strcpy(status, "ok");
         }
         else
@@ -351,7 +368,10 @@ void parser(char* command){
             else
                 sheet.data[row][col].isError=false;
             
-            add_constraints(&sheet.data[row][col],col1,row1,-1,-1,sheet.data[row1][col1].value,'=');
+            cell_info cell = {row,col};
+            cell_info cell1 = {row1,col1};
+            cell_info cell2 = {-1,-1};
+            add_constraints(cell,cell1,cell2,sheet.data[row1][col1].value,'=');
             
             strcpy(status, "ok");
         }
@@ -368,13 +388,19 @@ void parser(char* command){
         sheet.data[row][col].isError=false;
         calc_error=false;
         if (is_valid_cell(row,col) && val1 >= 0){
-            add_constraints(&sheet.data[row][col],-1,-1,-1,-1,val1,'Z');
+            cell_info cell = {row,col};
+            cell_info cell1 = {-1,-1};
+            cell_info cell2 = {-1,-1};
+            add_constraints(cell,cell1,cell2,val1,'Z');
             sleep(val1);
             strcpy(status, "ok");
         }
         else if (is_valid_cell(row, col) && val1 < 0)
         {
-            add_constraints(&sheet.data[row][col], -1, -1, -1, -1, val1, 'Z');
+            cell_info cell = {row,col};
+            cell_info cell1 = {-1,-1};
+            cell_info cell2 = {-1,-1};
+            add_constraints(cell,cell1,cell2,val1,'Z');
             strcpy(status, "ok");
         }
         else
@@ -396,8 +422,10 @@ void parser(char* command){
                 sheet.data[row][col].isError=true;
             else
                 sleep(sheet.data[row1][col1].value);
-            
-            add_constraints(&sheet.data[row][col],col1,row1,-1,-1,sheet.data[row1][col1].value,'Z');
+            cell_info cell = {row,col};
+            cell_info cell1 = {row1,col1};
+            cell_info cell2 = {-1,-1};
+            add_constraints(cell,cell1,cell2,sheet.data[row1][col1].value,'Z');
             strcpy(status, "ok");
         }
         else
