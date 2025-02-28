@@ -224,6 +224,19 @@ void recalculate(Cell *cell,bool isError){
     }
     return ;
 }
+
+void add_to_stack(stack *head,Cell *cell){
+    push(head,cell);
+    Node *temp = cell->dependencies;
+    while(temp!=NULL){
+        add_to_stack(head,temp->data);
+        temp = temp->next;
+    }
+}
+
+void topological_sort(stack *head){
+    
+}
     
 void add_constraints(Cell *cell,short cell1_col,short cell1_row,short cell2_col,short cell2_row,int value,char op_code){
     remove_dependency(cell);
@@ -260,9 +273,8 @@ void add_constraints(Cell *cell,short cell1_col,short cell1_row,short cell2_col,
     }
 
     cell->value = value;
-    Node *temp = cell->dependencies;
-    while(temp!=NULL){  
-        recalculate(temp->data,cell->isError);
-        temp = temp->next;
-    }
+    stack *head = NULL;
+    add_to_stack(head,cell);
+    //iss stack ke saath avl tree bnana h
+    //topological_sort()
 }
