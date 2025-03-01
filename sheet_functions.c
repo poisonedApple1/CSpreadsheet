@@ -306,7 +306,6 @@ void remove_dependency(cell_info cell){
 }
 
 void add_to_tree(avl_tree *head,cell_info cell){
-    printf("adding to tree %d %d\n",cell.row,cell.col);
     if(sheet.data[cell.row][cell.col].dependencies==NULL){
         return;
     }
@@ -322,6 +321,31 @@ void add_to_tree(avl_tree *head,cell_info cell){
 // void topological_sort(stack *head){
     
 // }
+
+bool check_cycle(avl_tree *tree,cell_info cell1,cell_info cell2){
+    //return true if cycle is found
+    avl_node *node = avl_find(tree,cell1.col*1000+cell1.row);
+    if(node!=NULL){
+        return true;
+    }
+    if(cell2.col==-1 && cell2.row==-1){
+        return false;
+    }
+    avl_node *node2 = avl_find(tree,cell2.col*1000+cell2.row);
+    if(node2!=NULL){
+        return true;
+    }
+    return false;
+}
+
+bool check_cycle_range_funcs(avl_node *root,cell_info cell1,cell_info cell2){
+    //return true if cycle is found
+    if(root==NULL) return false;
+    if(root->data/1000>=cell1.col && root->data/1000<=cell2.col && root->data%1000>=cell1.row && root->data%1000<=cell2.row){
+        return true;
+    }
+    return check_cycle_range_funcs(root->left,cell1,cell2) || check_cycle_range_funcs(root->right,cell1,cell2);
+}
     
 void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int value,char op_code){
     Cell *cell = &sheet.data[curr_cell.row][curr_cell.col];
@@ -332,8 +356,6 @@ void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int val
     avl_insert(tree,curr_cell_row_col);
     tree->root->indegree=0;
     add_to_tree(tree,curr_cell);
-    queue *sorted = topological_sort(tree);
-    
     cell->cell1 = cell1;
     cell->cell2 = cell2;
     cell->op_code = op_code;
@@ -346,6 +368,11 @@ void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int val
         case 'u':
         case 'd':
         case 'Z':
+            cell_info temp={-1,-1};
+            if(check_cycle(tree,cell1,temp)){
+                strcpy(status,"cycle found");
+                return;
+            }
             insert_into_list(&sheet.data[cell1.row][cell1.col],curr_cell_row_col);
             break;
         case 'S':
@@ -353,6 +380,10 @@ void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int val
         case 'M':
         case 'A':
         case 'D':
+            if(check_cycle_range_funcs(tree->root,cell1,cell2)){
+                strcpy(status,"cycle found");
+                return;
+            }
             for(int i=cell1.row;i<=cell2.row;i++){
                 for(int j=cell1.col;j<=cell2.col;j++){
                     insert_into_list(&sheet.data[i][j],curr_cell_row_col);
@@ -363,6 +394,10 @@ void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int val
         case '-':
         case '*':
         case '/':
+            if(check_cycle(tree,cell1,cell2)){
+                strcpy(status,"cycle found");
+                return;
+            }
             insert_into_list(&sheet.data[cell1.row][cell1.col],curr_cell_row_col);
             insert_into_list(&sheet.data[cell2.row][cell2.col],curr_cell_row_col);
             break;
@@ -376,14 +411,14 @@ void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int val
 
 
     // pretty_print(tree);
-    // queue *sorted = topological_sort(tree);
-    // while(!is_empty(sorted)){
-    //     avl_node *node = front(sorted);
-    //     sorted=pop(sorted);
-    //     // printf("\n----------------------------------\n");
-    //     // printf("calculating %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
-    //     recalculate(&sheet.data[node->data%1000][node->data/1000]);
-    //     // printf("calculated %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
-    //     // printf("----------------------------------\n");
-    // }
+    queue *sorted = topological_sort(tree);
+    while(!is_empty(sorted)){
+        avl_node *node = front(sorted);
+        sorted=pop(sorted);
+        // printf("\n----------------------------------\n");
+        // printf("calculating %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
+        recalculate(&sheet.data[node->data%1000][node->data/1000]);
+        // printf("calculated %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
+        // printf("----------------------------------\n");
+    }
 }

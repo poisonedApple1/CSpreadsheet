@@ -180,8 +180,8 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {-1,-1};
             cell_info cell2 = {-1,-1};
-            add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
+            add_constraints(cell,cell1,cell2,ans,op);
         }
         else
         {
@@ -209,8 +209,8 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {val_row1-1,col1};
             cell_info cell2 = {val_row2-1,col2};
-            add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
+            add_constraints(cell,cell1,cell2,ans,op);
             
         }
         else
@@ -249,8 +249,8 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {val_row1-1,col1};
             cell_info cell2 = {const2,const1};
-            add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
+            add_constraints(cell,cell1,cell2,ans,op);
             
         }
         else
@@ -284,8 +284,8 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {val_row1-1,col1};
             cell_info cell2 = {const2,const1};
-            add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
+            add_constraints(cell,cell1,cell2,ans,op);
             
         }
         else
@@ -325,8 +325,8 @@ void parser(char* command){
             cell_info cell1 = {val_row1-1,col1};
             cell_info cell2 = {val_row2-1,col2};
             cell_info cell = {row,col};
-            add_constraints(cell,cell1,cell2,ans,op_code);
             strcpy(status, "ok");
+            add_constraints(cell,cell1,cell2,ans,op_code);
             
                 
         }
@@ -345,8 +345,8 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {-1,-1};
             cell_info cell2 = {-1,-1};
-            add_constraints(cell,cell1,cell2,val1,'X');
             strcpy(status, "ok");
+            add_constraints(cell,cell1,cell2,val1,'X');
         }
         else
         {
@@ -370,9 +370,9 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {row1,col1};
             cell_info cell2 = {-1,-1};
+            strcpy(status, "ok");
             add_constraints(cell,cell1,cell2,sheet.data[row1][col1].value,'=');
             
-            strcpy(status, "ok");
         }
         else
         {
@@ -390,17 +390,17 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {-1,-1};
             cell_info cell2 = {-1,-1};
+            strcpy(status, "ok");
             add_constraints(cell,cell1,cell2,val1,'X');
             sleep(val1);
-            strcpy(status, "ok");
         }
         else if (is_valid_cell(row, col) && val1 < 0)
         {
             cell_info cell = {row,col};
             cell_info cell1 = {-1,-1};
             cell_info cell2 = {-1,-1};
-            add_constraints(cell,cell1,cell2,val1,'X');
             strcpy(status, "ok");
+            add_constraints(cell,cell1,cell2,val1,'X');
         }
         else
         {
@@ -424,8 +424,8 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {row1,col1};
             cell_info cell2 = {-1,-1};
-            add_constraints(cell,cell1,cell2,sheet.data[row1][col1].value,'Z');
             strcpy(status, "ok");
+            add_constraints(cell,cell1,cell2,sheet.data[row1][col1].value,'Z');
         }
         else
         {

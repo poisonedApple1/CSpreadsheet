@@ -18,6 +18,7 @@ bool is_empty(queue *head);
 int min(int a, int b);
 int max(int a, int b);
 bool is_valid_cell(int row, int col);
+int count(queue *head);
 
 #endif
 

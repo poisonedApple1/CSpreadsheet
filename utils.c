@@ -51,3 +51,13 @@ queue *pop(queue *head){
 bool is_empty(queue *head){
     return head == NULL;
 }
+
+int count(queue *head){
+    int count = 0;
+    queue *temp = head;
+    while(temp!=NULL){
+        count++;
+        temp = temp->next;
+    }
+    return count;   
+}
