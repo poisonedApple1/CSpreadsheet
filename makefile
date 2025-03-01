@@ -1,5 +1,5 @@
 all: 
-	gcc -g sheet.c sheet_functions.c utils.c parser.c calculate_functions.c avl.c -lm -o sheet
+	gcc -g sheet.c sheet_functions.c utils.c parser.c calculate_functions.c avl.c -lm -o ./target/release/spreadsheet
 
 clean:
-	rm -f sheet
+	rm -f ./target/release/spreadsheet

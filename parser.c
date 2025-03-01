@@ -139,8 +139,8 @@ void parser(char* command){
             if (is_valid_cell(r,c)){
                 column_start = c;
                 row_start = r;
-                row_start = min(row_start, sheet.rows - 10);
-                column_start = min(column_start, sheet.cols - 10);
+                // row_start = min(row_start, sheet.rows - 10);
+                // column_start = min(column_start, sheet.cols - 10);
                 row_start= max(row_start,0);
                 column_start=max(column_start,0);
                 strcpy(status, "ok");
