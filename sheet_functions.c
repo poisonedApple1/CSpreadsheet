@@ -87,24 +87,24 @@ void print_table(int column_start,
   }
 }
 
-// void free_sheet()
-// {
-//     for (int i = 0; i < sheet.rows; i++)
-//     {
-//         for (int j = 0; j < sheet.cols; j++)
-//         {
-//             Node *temp = sheet.data[i][j].dependencies;
-//             while (temp != NULL)
-//             {
-//                 Node *temp2 = temp->next;
-//                 free(temp);
-//                 temp = temp2;
-//             }
-//         }
-//         free(sheet.data[i]);
-//     }
-//     free(sheet.data);
-// }
+void free_sheet()
+{
+    for (int i = 0; i < sheet.rows; i++)
+    {
+        for (int j = 0; j < sheet.cols; j++)
+        {
+            dependency_node *temp = sheet.data[i][j].dependencies;
+            while (temp != NULL)
+            {
+                dependency_node *temp2 = temp->next;
+                free(temp);
+                temp = temp2;
+            }
+        }
+        free(sheet.data[i]);
+    }
+    free(sheet.data);
+}
 
 void remove_from_list(Cell *target, int delete_cell) {
   dependency_node *curr = (target->dependencies);

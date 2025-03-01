@@ -42,7 +42,7 @@ void initialise_sheet(int m, int n);
 char *column_name(int column_number);
 int get_col(char *col_name);
 void print_table(int column_start, int row_start);
-// void free_sheet();
+void free_sheet();
 void remove_from_list(Cell *target,int delete_cell);
 void insert_into_list(Cell *target,int insert_cell);
 void remove_dependency(cell_info cell);

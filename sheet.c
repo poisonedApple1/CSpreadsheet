@@ -57,6 +57,6 @@ int main(int argc, char *argv[]) {
       print_table(column_start, row_start);
     printf("[%.1f] (%s) >", execution_time, status);
   }
-  // free_sheet();
+  free_sheet();
   return 0;
 }
