@@ -22,8 +22,7 @@ void initialise_sheet(int m, int n) {
       sheet.data[i][j].cell1.col = -1;
       sheet.data[i][j].cell1.row = -1;
       sheet.data[i][j].cell2.col = -1;
-      sheet.data[i][j].cell2.row = -1;
-      sheet.data[i][j].dep_count = 0;
+      sheet.data[i][j].cell2.row = -1; 
       sheet.data[i][j].dependencies = NULL;
     }
   }
@@ -116,14 +115,12 @@ void remove_from_list(Cell *target, int delete_cell) {
       } else {
         prev->next = curr->next;
       }
-      free(curr);
-      target->dep_count--;
+      free(curr); 
       return;
     }
     prev = curr;
     curr = curr->next;
-  }
-  target->dep_count--;
+  } 
   return;
 }
 
@@ -132,8 +129,7 @@ void insert_into_list(Cell *target, int insert_cell) {
       (dependency_node *)malloc(sizeof(dependency_node));
   new_node->data = insert_cell;
   new_node->next = target->dependencies;
-  target->dependencies = new_node;
-  target->dep_count++;
+  target->dependencies = new_node; 
   return;
 }
 

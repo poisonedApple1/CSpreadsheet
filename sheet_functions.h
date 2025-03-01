@@ -21,8 +21,7 @@ typedef struct cell{
     bool isError;
     char op_code;
     cell_info cell1;
-    cell_info cell2;
-    int dep_count;
+    cell_info cell2; 
     dependency_node *dependencies;
 } Cell;
 
