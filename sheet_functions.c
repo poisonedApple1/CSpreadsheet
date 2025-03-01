@@ -200,6 +200,10 @@ void recalculate(Cell *cell) {
 
   switch (cell->op_code) {
   case '=':
+    if(sheet.data[cell->cell1.row][cell->cell1.col].isError){
+      cell->isError = true;
+      return;
+    }
     ans = sheet.data[cell->cell1.row][cell->cell1.col].value;
     break;
   case '+':
@@ -238,6 +242,10 @@ void recalculate(Cell *cell) {
     cell->value = ans;
     break;
   case 'Z':
+    if (sheet.data[cell->cell1.row][cell->cell1.col].isError) {
+      cell->isError = true;
+      return;
+    }
     ans = sheet.data[cell->cell1.row][cell->cell1.col].value;
     sleep_timer+=ans;
     break;
@@ -357,7 +365,6 @@ bool check_cycle_range_funcs(avl_node *root, cell_info cell1, cell_info cell2) {
 void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
                      int value, char op_code) {
   Cell *cell = &sheet.data[curr_cell.row][curr_cell.col];
-  remove_dependency(curr_cell);
   int curr_cell_row_col = curr_cell.col * 1000 + curr_cell.row;
 
   avl_tree *tree = avl_create();
@@ -378,9 +385,10 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
   case 'Z':
     cell_info temp = {-1, -1};
     if (check_cycle(tree, cell1, temp)) {
-      strcpy(status, "cycle found");
+      strcpy(status, "circular error");
       return;
     }
+    remove_dependency(curr_cell);
     insert_into_list(&sheet.data[cell1.row][cell1.col], curr_cell_row_col);
     break;
   case 'S':
@@ -389,9 +397,10 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
   case 'A':
   case 'D':
     if (check_cycle_range_funcs(tree->root, cell1, cell2)) {
-      strcpy(status, "cycle found");
+      strcpy(status, "circular error");
       return;
     }
+    remove_dependency(curr_cell);
     for (int i = cell1.row; i <= cell2.row; i++) {
       for (int j = cell1.col; j <= cell2.col; j++) {
         insert_into_list(&sheet.data[i][j], curr_cell_row_col);
@@ -403,9 +412,10 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
   case '*':
   case '/':
     if (check_cycle(tree, cell1, cell2)) {
-      strcpy(status, "cycle found");
+      strcpy(status, "circular error");
       return;
     }
+    remove_dependency(curr_cell);
     insert_into_list(&sheet.data[cell1.row][cell1.col], curr_cell_row_col);
     insert_into_list(&sheet.data[cell2.row][cell2.col], curr_cell_row_col);
     break;
@@ -416,6 +426,10 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
   cell->cell2.col = cell2.col;
   cell->cell2.row = cell2.row;
   cell->value = value;
+  if(calc_error)
+    cell->isError = true;
+  else
+    cell->isError = false;
 
   if (cell->op_code == 'Z')
     sleep_timer+=value;
