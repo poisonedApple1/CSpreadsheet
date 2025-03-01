@@ -56,6 +56,7 @@ char func_to_op_code(char *func)
 
 int compute_cell(char op_code,int cell_value,int cell_value2){
     //function to compute the value of the cell
+    calc_error=false;
     if(op_code=='+')      return cell_value + cell_value2;
     else if(op_code=='-') return cell_value - cell_value2;
     else if(op_code=='*') return cell_value * cell_value2;

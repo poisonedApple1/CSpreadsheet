@@ -168,7 +168,6 @@ queue* topological_sort(avl_tree *tree){
     while(!is_empty(q)){
         avl_node *node = front(q);
         q=pop(q);
-        printf("%d ",node->data);
         final_sorted=push(final_sorted,node);
         dependency_node *curr = sheet.data[node->data%1000][node->data/1000].dependencies;
         while(curr!=NULL){
@@ -203,64 +202,70 @@ queue* topological_sort(avl_tree *tree){
 */
    
    
-// void recalculate(Cell *cell,bool isError){
-//        //if we find error in one cell, we make error false such that the cells depending on this cell also show error
-//     if(cell == NULL) return ;
-//     cell->isError=isError;
-//     int ans=-1;
-//     if(!isError){
-//         switch(cell->op_code){
-//             case '=':
-//                 ans=sheet.data[cell->cell1.row][cell->cell1.col].value;
-//                 calc_error=false;
-//                 break;
-//             case '+':  
-//             case '-':
-//             case '*':
-//             case '/':
-//                 int val1=sheet.data[cell->cell1.row][cell->cell1.col].value;
-//                 int val2=sheet.data[cell->cell2.row][cell->cell2.col].value;
-//                 ans=compute_cell(cell->op_code,val1,val2);
-//                 if(calc_error) cell->isError=true;
-//                 else cell->isError=false;
-//                 break;
-//             case 'p':
-//             case 's':
-//             case 'u':
-//             case 'd':
-//                 int val=cell->cell2_col + cell->cell2_row* pow(2,16);
-//                 char op_code=get_op_code_rev(cell->op_code);
-//                 ans=compute_cell(op_code,sheet.data[cell->cell1.row][cell->cell1.col].value,val);
-//                 if(calc_error) cell->isError=true;
-//                 else cell->isError=false;
-//                 cell->value=ans;
-//                 break;
-//             case 'Z':
-//                 ans=sheet.data[cell->cell1.row][cell->cell1.col].value;
-//                 sleep(ans);
-//                 break;
-//             case 'S':
-//             case 'm':
-//             case 'M':
-//             case 'A':
-//             case 'D':
-//                 ans=compute_range_func(cell->op_code,cell->cell1_row,cell->cell1_col,cell->cell2_row,cell->cell2_col);
-//                 if(calc_error) cell->isError=true;
-//                 else cell->isError=false;
-//                 break;
-//             default:
-//                 return ;
-//         }
-//         cell->value=ans;
-//     }
+void recalculate(Cell *cell){
+    if(cell == NULL) return ;
+    int ans;
 
-//     Node *temp = cell->dependencies;
-//     while(temp!=NULL){
-//         recalculate(temp->data,cell->isError);
-//         temp = temp->next;
-//     }
-//     return ;
-// }
+    switch(cell->op_code){
+        case '=':
+            ans=sheet.data[cell->cell1.row][cell->cell1.col].value;
+            break;
+        case '+':  
+        case '-':
+        case '*':
+        case '/':
+            if(sheet.data[cell->cell1.row][cell->cell1.col].isError || sheet.data[cell->cell2.row][cell->cell2.col].isError){
+                cell->isError=true;
+                return;
+            }
+            int val1=sheet.data[cell->cell1.row][cell->cell1.col].value;
+            int val2=sheet.data[cell->cell2.row][cell->cell2.col].value;
+            ans=compute_cell(cell->op_code,val1,val2);
+            if(calc_error) cell->isError=true;
+            else cell->isError=false;
+            break;
+        case 'p':
+        case 's':
+        case 'u':
+        case 'd':
+            if(sheet.data[cell->cell1.row][cell->cell1.col].isError){
+                cell->isError=true;
+                return;
+            }
+            int val=cell->cell2.col + cell->cell2.row* pow(2,16);
+            char op_code=get_op_code_rev(cell->op_code);
+            ans=compute_cell(op_code,sheet.data[cell->cell1.row][cell->cell1.col].value,val);
+            if(calc_error) cell->isError=true;
+            else cell->isError=false;
+            cell->value=ans;
+            break;
+        case 'Z':
+            ans=sheet.data[cell->cell1.row][cell->cell1.col].value;
+            sleep(ans);
+            break;
+        case 'S':
+        case 'm':
+        case 'M':
+        case 'A':
+        case 'D':
+            for(int i=cell->cell1.row;i<=cell->cell2.row;i++){
+                for(int j=cell->cell1.col;j<=cell->cell2.col;j++){
+                    if(sheet.data[i][j].isError){
+                        cell->isError=true;
+                        return;
+                    }
+                }
+            }
+            ans=compute_range_func(cell->op_code,cell->cell1.row,cell->cell1.col,cell->cell2.row,cell->cell2.col);
+            if(calc_error) cell->isError=true;
+            else cell->isError=false;
+            break;
+        default:
+            return ;
+    }
+    cell->value=ans;    
+    return ;
+}
 
 void remove_dependency(cell_info cell){
     Cell * curr_cell = &sheet.data[cell.row][cell.col];
@@ -319,8 +324,7 @@ void add_to_tree(avl_tree *head,cell_info cell){
     
 void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int value,char op_code){
     Cell *cell = &sheet.data[curr_cell.row][curr_cell.col];
-    cell_info curr_cell_info = {curr_cell.col,curr_cell.row};
-    remove_dependency(curr_cell_info);
+    remove_dependency(curr_cell);
     cell->cell1 = cell1;
     cell->cell2 = cell2;
     cell->op_code = op_code;
@@ -364,8 +368,17 @@ void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int val
     avl_tree *tree = avl_create();
     avl_insert(tree,curr_cell_row_col);
     tree->root->indegree=0;
-    add_to_tree(tree,curr_cell_info);
+    add_to_tree(tree,curr_cell);
 
     pretty_print(tree);
     queue *sorted = topological_sort(tree);
+    while(!is_empty(sorted)){
+        avl_node *node = front(sorted);
+        sorted=pop(sorted);
+        // printf("\n----------------------------------\n");
+        // printf("calculating %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
+        recalculate(&sheet.data[node->data%1000][node->data/1000]);
+        // printf("calculated %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
+        // printf("----------------------------------\n");
+    }
 }
