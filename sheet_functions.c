@@ -193,8 +193,8 @@ queue* topological_sort(avl_tree *tree){
     M -> MAX
     A -> AVG
     D -> STDEV
-    Z -> sleep
-    X -> const op const,const
+    Z -> sleep(cell)
+    X -> const op const,const , sleep(const)
     p -> const+cell or cell+const
     s -> const-cell or cell-const
     u -> const*cell or cell*const
@@ -306,6 +306,7 @@ void remove_dependency(cell_info cell){
 }
 
 void add_to_tree(avl_tree *head,cell_info cell){
+    printf("adding to tree %d %d\n",cell.row,cell.col);
     if(sheet.data[cell.row][cell.col].dependencies==NULL){
         return;
     }
@@ -325,10 +326,17 @@ void add_to_tree(avl_tree *head,cell_info cell){
 void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int value,char op_code){
     Cell *cell = &sheet.data[curr_cell.row][curr_cell.col];
     remove_dependency(curr_cell);
+    int curr_cell_row_col = curr_cell.col*1000+curr_cell.row;
+
+    avl_tree *tree = avl_create();
+    avl_insert(tree,curr_cell_row_col);
+    tree->root->indegree=0;
+    add_to_tree(tree,curr_cell);
+    queue *sorted = topological_sort(tree);
+    
     cell->cell1 = cell1;
     cell->cell2 = cell2;
     cell->op_code = op_code;
-    int curr_cell_row_col = curr_cell.col*1000+curr_cell.row;
     switch(op_code){
         case 'X':
             break;
@@ -365,20 +373,17 @@ void add_constraints(cell_info curr_cell,cell_info cell1,cell_info cell2,int val
     cell->cell2.col = cell2.col;
     cell->cell2.row = cell2.row;
     cell->value = value;
-    avl_tree *tree = avl_create();
-    avl_insert(tree,curr_cell_row_col);
-    tree->root->indegree=0;
-    add_to_tree(tree,curr_cell);
 
-    pretty_print(tree);
-    queue *sorted = topological_sort(tree);
-    while(!is_empty(sorted)){
-        avl_node *node = front(sorted);
-        sorted=pop(sorted);
-        // printf("\n----------------------------------\n");
-        // printf("calculating %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
-        recalculate(&sheet.data[node->data%1000][node->data/1000]);
-        // printf("calculated %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
-        // printf("----------------------------------\n");
-    }
+
+    // pretty_print(tree);
+    // queue *sorted = topological_sort(tree);
+    // while(!is_empty(sorted)){
+    //     avl_node *node = front(sorted);
+    //     sorted=pop(sorted);
+    //     // printf("\n----------------------------------\n");
+    //     // printf("calculating %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
+    //     recalculate(&sheet.data[node->data%1000][node->data/1000]);
+    //     // printf("calculated %d %d %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
+    //     // printf("----------------------------------\n");
+    // }
 }

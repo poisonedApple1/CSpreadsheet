@@ -248,7 +248,7 @@ void parser(char* command){
             op=get_op_code(op);
             cell_info cell = {row,col};
             cell_info cell1 = {val_row1-1,col1};
-            cell_info cell2 = {const1,const2};
+            cell_info cell2 = {const2,const1};
             add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
             
@@ -283,7 +283,7 @@ void parser(char* command){
             op=get_op_code(op);
             cell_info cell = {row,col};
             cell_info cell1 = {val_row1-1,col1};
-            cell_info cell2 = {const1,const2};
+            cell_info cell2 = {const2,const1};
             add_constraints(cell,cell1,cell2,ans,op);
             strcpy(status, "ok");
             
@@ -336,8 +336,7 @@ void parser(char* command){
         }
     }
     // cell = int
-    else if (sscanf(command, "%[A-Z]%d=%d", ref_col, &ref_row, &val1) == 3)
-    {
+    else if (sscanf(command, "%[A-Z]%d=%d", ref_col, &ref_row, &val1) == 3){
         int col = get_col(ref_col);
         int row = ref_row - 1;
         sheet.data[row][col].isError=false;
@@ -355,8 +354,7 @@ void parser(char* command){
         }
     }
     // cell = cell
-    else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d", ref_col, &ref_row, val_col1, &val_row1) == 4)
-    {
+    else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d", ref_col, &ref_row, val_col1, &val_row1) == 4){
         int col = get_col(ref_col);
         int row = ref_row - 1;
         int col1 = get_col(val_col1);
@@ -392,7 +390,7 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {-1,-1};
             cell_info cell2 = {-1,-1};
-            add_constraints(cell,cell1,cell2,val1,'Z');
+            add_constraints(cell,cell1,cell2,val1,'X');
             sleep(val1);
             strcpy(status, "ok");
         }
@@ -401,7 +399,7 @@ void parser(char* command){
             cell_info cell = {row,col};
             cell_info cell1 = {-1,-1};
             cell_info cell2 = {-1,-1};
-            add_constraints(cell,cell1,cell2,val1,'Z');
+            add_constraints(cell,cell1,cell2,val1,'X');
             strcpy(status, "ok");
         }
         else
@@ -421,8 +419,8 @@ void parser(char* command){
         if (is_valid_cell(row,col) && is_valid_cell(row1,col1)){
             if(sheet.data[row1][col1].isError)
                 sheet.data[row][col].isError=true;
-            else
-                sleep(sheet.data[row1][col1].value);
+            // else
+            //     sleep(sheet.data[row1][col1].value);
             cell_info cell = {row,col};
             cell_info cell1 = {row1,col1};
             cell_info cell2 = {-1,-1};
