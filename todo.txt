@@ -2,7 +2,7 @@ change sleep function such that recalculations happens and after that sleep is c
 
 use malloc to allocate dependancy array in cell struct
 
-fasos se chicken roll khana hai
+fasos se chicken roll khana hai (2 baar)
 
 handle errors during recalculations -div by 0 
 

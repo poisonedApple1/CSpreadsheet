@@ -3,6 +3,7 @@
 #include <stdbool.h>
 void parser(char* command);
 extern int column_start, row_start; 
+extern int sleep_timer;
 extern bool print_allowed;
 extern char status[50];
 char get_op_code(char op_code);
