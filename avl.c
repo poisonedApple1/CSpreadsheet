@@ -204,6 +204,21 @@ void pretty_print(avl_tree *tree) {
     print_tree_helper(tree->root->right, "", 0);
 }
 
+void free_avl_node(avl_node *node) {
+    if (node == NULL) return;
+    free_avl_node(node->left);
+    free_avl_node(node->right);
+    free(node);
+    node = NULL;
+}
+void free_avl(avl_tree *tree) {
+    if(tree == NULL) return;
+    free_avl_node(tree->root);
+    tree->root = NULL;
+    free(tree);
+    tree = NULL;
+}
+
  
 // int main() {
 //     avl_tree *tree = avl_create(); 

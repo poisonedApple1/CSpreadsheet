@@ -438,4 +438,5 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
     // %d\n",node->data%1000,node->data/1000,sheet.data[node->data%1000][node->data/1000].value);
     // printf("----------------------------------\n");
   }
+  free_avl(tree);
 }

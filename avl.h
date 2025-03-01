@@ -19,6 +19,7 @@ void avl_insert(avl_tree *tree, int value);
 void avl_delete(avl_tree *tree, int value);
 avl_node *avl_find(avl_tree *tree, int value);
 void pretty_print(avl_tree *tree);
+void free_avl(avl_tree *tree);
 
 
 #endif
