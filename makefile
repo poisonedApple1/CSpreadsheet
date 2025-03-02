@@ -10,3 +10,6 @@ test:
         echo "Processing $$file -> $$out"; \
         ( ./target/release/spreadsheet 999 18278 < $$file; echo ) > $$out; \
     done
+
+report:
+	pdflatex report.tex
