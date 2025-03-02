@@ -20,7 +20,7 @@ int SUM(int val_row1, int c1, int val_row2, int c2) {
 }
 
 int MIN(int val_row1, int c1, int val_row2, int c2) {
-  int a = pow(2, 31) - 1;
+  int a = INT_MAX;
   for (int i = val_row1; i <= val_row2; i++) {
     for (int j = c1; j <= c2; j++) {
       int b = sheet.data[i][j].value;
@@ -32,7 +32,7 @@ int MIN(int val_row1, int c1, int val_row2, int c2) {
 }
 
 int MAX(int val_row1, int c1, int val_row2, int c2) {
-  int a = 0;
+  int a = INT_MIN;
   for (int i = val_row1; i <= val_row2; i++) {
     for (int j = c1; j <= c2; j++) {
       int b = sheet.data[i][j].value;
