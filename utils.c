@@ -16,8 +16,6 @@ bool is_valid_cell(int row, int col){
 }
 
 //queue implementation
-
-
 queue *create_node(avl_node *node){
     queue *new_node = (queue *)malloc(sizeof(queue));
     new_node->node = node;

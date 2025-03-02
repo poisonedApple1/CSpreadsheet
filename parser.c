@@ -13,6 +13,25 @@ char status[50] = "ok";
 bool calc_error = false;
 int sleep_timer = 0;
 
+/*
+    = ->cell
+    + -> cell+cell
+    - ->cell-cell
+    * -> cell*cell
+    / -> cell/cell
+    S -> SUM
+    m -> MIN
+    M -> MAX
+    A -> AVG
+    D -> STDEV
+    Z -> sleep(cell)
+    X -> const op const,const , sleep(const)
+    p -> const+cell or cell+const
+    s -> const-cell or cell-const
+    u -> const*cell or cell*const
+    d -> const/cell or cell/const
+*/
+
 char get_op_code(char op_code) {
   // function to get opcode for the case of int op cell or cell op int
   if (op_code == '+')
@@ -55,43 +74,6 @@ char func_to_op_code(char *func) {
   return 'X';
 }
 
-int compute_cell(char op_code, int cell_value, int cell_value2) {
-  // function to compute the value of the cell
-  calc_error = false;
-  if (op_code == '+')
-    return cell_value + cell_value2;
-  else if (op_code == '-')
-    return cell_value - cell_value2;
-  else if (op_code == '*')
-    return cell_value * cell_value2;
-  else if (op_code == '/') {
-    if (cell_value2 == 0) {
-      calc_error = true;
-      return -1;
-    }
-    return cell_value / cell_value2;
-  }
-  strcpy(status, "Invalid cmd");
-  return -1;
-}
-
-int compute_range_func(char op_code, int row1, int col1, int row2, int col2) {
-  if (col1 > col2 || row1 > row2) {
-    strcpy(status, "Invalid cmd");
-    return -1;
-  }
-  if (op_code == 'S')
-    return SUM(row1, col1, row2, col2);
-  else if (op_code == 'm')
-    return MIN(row1, col1, row2, col2);
-  else if (op_code == 'M')
-    return MAX(row1, col1, row2, col2);
-  else if (op_code == 'A')
-    return AVG(row1, col1, row2, col2);
-  else if (op_code == 'D')
-    return STDEV(row1, col1, row2, col2);
-  return -1;
-}
 
 void remove_space(char *command) {
   char *i = command, *j = command;
