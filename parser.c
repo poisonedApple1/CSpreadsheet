@@ -252,8 +252,9 @@ void parser(char *command) {
     int col1 = get_col(val_col1);
     int col2 = get_col(val_col2);
     if (is_valid_cell(row, col) && is_valid_cell(val_row1 - 1, col1) &&
-        is_valid_cell(val_row2 - 1, col2)) { 
-
+        is_valid_cell(val_row2 - 1, col2) 
+        && val_row1<=val_row2 && col1<=col2) { 
+      
 
       char op_code = func_to_op_code(func);
 
