@@ -46,7 +46,7 @@ void remove_from_list(Cell *target,int delete_cell);
 void insert_into_list(Cell *target,int insert_cell);
 void remove_dependency(cell_info cell);
 void recalculate(Cell *cell);
-void add_constraints(cell_info cell,cell_info cell1,cell_info cell2,int value,char op_code);
+void add_constraints(cell_info cell,cell_info cell1,cell_info cell2,char op_code);
 
 
 #endif

@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+bool calc_error=false;
+
 int SUM(int val_row1, int c1, int val_row2, int c2) {
   int a = 0;
   for (int i = val_row1; i <= val_row2; i++) {
@@ -70,18 +73,28 @@ int STDEV(int val_row1, int c1, int val_row2, int c2) {
 int compute_cell(char op_code, int cell_value, int cell_value2) {
   // function to compute the value of the cell
   calc_error = false;
-  if (op_code == '+')
+  if (op_code == '+' || op_code == 'p')
     return cell_value + cell_value2;
-  else if (op_code == '-')
+  else if (op_code == '-' || op_code == 's')
     return cell_value - cell_value2;
-  else if (op_code == '*')
+  else if (op_code == '*' || op_code == 'u')
     return cell_value * cell_value2;
-  else if (op_code == '/') {
+  else if (op_code == '/' || op_code == 'd') {
     if (cell_value2 == 0) {
       calc_error = true;
       return -1;
     }
     return cell_value / cell_value2;
+  }
+  else if(op_code == 'b'){
+    if (cell_value == 0) {
+      calc_error = true;
+      return -1;
+    }
+    return cell_value2 / cell_value;
+  }
+  else if(op_code == 'Z'){
+    return cell_value;
   }
   strcpy(status, "Invalid cmd");
   return -1;

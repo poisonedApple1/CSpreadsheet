@@ -192,6 +192,7 @@ void recalculate(Cell *cell) {
         cell->isError = true;
         return;
       }
+      cell->isError=false;
       ans = sheet.data[cell->cell1.row][cell->cell1.col].value;
       break;
     case '+':
@@ -215,13 +216,13 @@ void recalculate(Cell *cell) {
     case 's':
     case 'u':
     case 'd':
+    case 'b':
       if (sheet.data[cell->cell1.row][cell->cell1.col].isError) {
         cell->isError = true;
         return;
       }
-      int val = cell->cell2.col + cell->cell2.row * pow(2, 16);
-      char op_code = get_op_code_rev(cell->op_code);
-      ans = compute_cell(op_code,
+      int val = cell->cell2.col + cell->cell2.row * pow(2, 16); 
+      ans = compute_cell(cell->op_code,
                         sheet.data[cell->cell1.row][cell->cell1.col].value, val);
       if (calc_error)
         cell->isError = true;
@@ -261,6 +262,7 @@ void recalculate(Cell *cell) {
       return;
   }
   cell->value = ans;
+  calc_error=false;
   return;
 }
 
@@ -276,6 +278,7 @@ void remove_dependency(cell_info cell) {
     case 's':
     case 'u':
     case 'd':
+    case 'b':
     case 'Z':
       remove_from_list(&sheet.data[curr_cell->cell1.row][curr_cell->cell1.col],
                       cell.col * 1000 + cell.row);
@@ -366,30 +369,21 @@ bool check_cycle_range_funcs(avl_node *root, cell_info cell1, cell_info cell2) {
 //updates the dependency lists of the cells
 //calls the recalculation function
 void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
-                     int value, char op_code) {
+                     char op_code) {
   Cell *cell = &sheet.data[curr_cell.row][curr_cell.col];
   int curr_cell_row_col = curr_cell.col * 1000 + curr_cell.row;
-
+  int ans = 0;
+  cell_info temp = {-1, -1};
   avl_tree *tree = avl_create();
   avl_insert(tree, curr_cell_row_col);
   tree->root->indegree = 0;
   add_to_tree(tree, curr_cell);
   switch (op_code) {
     case 'X':
+      ans = sheet.data[curr_cell.row][curr_cell.col].value;
       remove_dependency(curr_cell);
-      cell->cell1.col = cell1.col;
-      cell->cell1.row = cell1.row;
-      cell->cell2.col = cell2.col;
-      cell->cell2.row = cell2.row;
-      cell->op_code = op_code;
       break;
     case '=':
-    case 'p':
-    case 's':
-    case 'u':
-    case 'd':
-    case 'Z':
-      cell_info temp = {-1, -1};
       if (check_cycle(tree, cell1, temp)) {
         strcpy(status, "circular error");
         return;
@@ -400,6 +394,31 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
       cell->cell2.col = cell2.col;
       cell->cell2.row = cell2.row;
       cell->op_code = op_code;
+      if (sheet.data[cell1.row][cell1.col].isError)
+        calc_error = true;
+      else
+        ans = sheet.data[cell1.row][cell1.col].value;
+      insert_into_list(&sheet.data[cell1.row][cell1.col], curr_cell_row_col);
+      break;
+    case 'p':
+    case 's':
+    case 'u':
+    case 'd':
+    case 'b':
+    case 'Z':
+      if (check_cycle(tree, cell1, temp)) {
+        strcpy(status, "circular error");
+        return;
+      }
+      remove_dependency(curr_cell);
+      cell->cell1.col = cell1.col;
+      cell->cell1.row = cell1.row;
+      cell->cell2.col = cell2.col;
+      cell->cell2.row = cell2.row;
+      cell->op_code = op_code;
+      int value = cell2.col + cell2.row * pow(2, 16);
+      if (sheet.data[cell1.row][cell1.col].isError) calc_error = true;
+      else ans = compute_cell(op_code, sheet.data[cell1.row][cell1.col].value, value);
       insert_into_list(&sheet.data[cell1.row][cell1.col], curr_cell_row_col);
       break;
     case 'S':
@@ -411,12 +430,25 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
         strcpy(status, "circular error");
         return;
       }
+      for (int i = cell1.row; i <= cell2.row; i++) {
+        for (int j = cell1.col; j <= cell2.col; j++) {
+          if (sheet.data[i][j].isError) { 
+            calc_error = true;
+            break;
+          }
+        }
+        if (calc_error)
+          break;
+      }
       remove_dependency(curr_cell);
       cell->cell1.col = cell1.col;
       cell->cell1.row = cell1.row;
       cell->cell2.col = cell2.col;
       cell->cell2.row = cell2.row;
       cell->op_code = op_code;
+      if(!calc_error) {
+        ans = compute_range_func(op_code, cell1.row, cell1.col, cell2.row, cell2.col);
+      }
       for (int i = cell1.row; i <= cell2.row; i++) {
         for (int j = cell1.col; j <= cell2.col; j++) {
           insert_into_list(&sheet.data[i][j], curr_cell_row_col);
@@ -437,19 +469,22 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
       cell->cell2.col = cell2.col;
       cell->cell2.row = cell2.row;
       cell->op_code = op_code;
+      if (sheet.data[cell1.row][cell1.col].isError || sheet.data[cell2.row][cell2.col].isError) calc_error = true;
+      else ans = compute_cell(op_code, sheet.data[cell1.row][cell1.col].value, sheet.data[cell2.row][cell2.col].value);
       insert_into_list(&sheet.data[cell1.row][cell1.col], curr_cell_row_col);
       insert_into_list(&sheet.data[cell2.row][cell2.col], curr_cell_row_col);
       break;
   }
+  
 
-  cell->value = value;
+  cell->value = ans;
   if(calc_error)
     cell->isError = true;
   else
     cell->isError = false;
-
+  calc_error = false;
   if (cell->op_code == 'Z')
-    sleep_timer+=value;
+    sleep_timer+=ans;
 
   queue *sorted = topological_sort(tree);
 
