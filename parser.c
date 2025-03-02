@@ -100,7 +100,7 @@ void parser(char *command) {
   int v1, v2;
   char op;
   char func[10];
-  int slashn;
+  int slashn=0;
   int ans;
 
   if (strcmp(command, "w") == 0) {
