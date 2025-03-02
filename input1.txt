@@ -1,5 +1,1 @@
-disable_output
-A1=4
-A2=5
-A3=AVG(A1:A2)
 q
