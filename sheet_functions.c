@@ -377,11 +377,14 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
   avl_insert(tree, curr_cell_row_col);
   tree->root->indegree = 0;
   add_to_tree(tree, curr_cell);
-  cell->cell1 = cell1;
-  cell->cell2 = cell2;
-  cell->op_code = op_code;
   switch (op_code) {
   case 'X':
+    remove_dependency(curr_cell);
+    cell->cell1.col = cell1.col;
+    cell->cell1.row = cell1.row;
+    cell->cell2.col = cell2.col;
+    cell->cell2.row = cell2.row;
+    cell->op_code = op_code;
     break;
   case '=':
   case 'p':
@@ -395,6 +398,11 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
       return;
     }
     remove_dependency(curr_cell);
+    cell->cell1.col = cell1.col;
+    cell->cell1.row = cell1.row;
+    cell->cell2.col = cell2.col;
+    cell->cell2.row = cell2.row;
+    cell->op_code = op_code;
     insert_into_list(&sheet.data[cell1.row][cell1.col], curr_cell_row_col);
     break;
   case 'S':
@@ -407,6 +415,11 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
       return;
     }
     remove_dependency(curr_cell);
+    cell->cell1.col = cell1.col;
+    cell->cell1.row = cell1.row;
+    cell->cell2.col = cell2.col;
+    cell->cell2.row = cell2.row;
+    cell->op_code = op_code;
     for (int i = cell1.row; i <= cell2.row; i++) {
       for (int j = cell1.col; j <= cell2.col; j++) {
         insert_into_list(&sheet.data[i][j], curr_cell_row_col);
@@ -422,15 +435,16 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
       return;
     }
     remove_dependency(curr_cell);
+    cell->cell1.col = cell1.col;
+    cell->cell1.row = cell1.row;
+    cell->cell2.col = cell2.col;
+    cell->cell2.row = cell2.row;
+    cell->op_code = op_code;
     insert_into_list(&sheet.data[cell1.row][cell1.col], curr_cell_row_col);
     insert_into_list(&sheet.data[cell2.row][cell2.col], curr_cell_row_col);
     break;
   }
 
-  cell->cell1.col = cell1.col;
-  cell->cell1.row = cell1.row;
-  cell->cell2.col = cell2.col;
-  cell->cell2.row = cell2.row;
   cell->value = value;
   if(calc_error)
     cell->isError = true;
