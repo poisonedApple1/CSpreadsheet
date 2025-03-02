@@ -115,6 +115,7 @@ void parser(char *command) {
   int v1, v2;
   char op;
   char func[10];
+  int slashn;
   int ans;
 
   if (strcmp(command, "w") == 0) {
@@ -136,7 +137,8 @@ void parser(char *command) {
     strcpy(status, "ok");
   } else if (strncmp(command, "scroll_to", 9) == 0) {
     // i removed space thats why
-    if (sscanf(command, "scroll_to %[A-Z]%d", ref_col, &ref_row) == 2) {
+    if (sscanf(command, "scroll_to%[A-Z]%d%n", ref_col, &ref_row,&slashn) == 2
+        && command[slashn]=='\0') {
       int c = get_col(ref_col);
       int r = ref_row - 1;
       if (is_valid_cell(r, c)) {
@@ -161,8 +163,9 @@ void parser(char *command) {
     strcpy(status, "ok");
   }
   // cell = int op int
-  else if (sscanf(command, "%[A-Z]%d=%d%c%d", ref_col, &ref_row, &val1, &op,
-                  &val2) == 5) {
+  else if (sscanf(command, "%[A-Z]%d=%d%c%d%n", ref_col, &ref_row, &val1, &op,
+                  &val2,&slashn) == 5
+                  && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     if (is_valid_cell(row, col)) {
@@ -181,14 +184,15 @@ void parser(char *command) {
     }
   }
   // cell = cell op cell
-  else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%[A-Z]%d", ref_col, &ref_row,
-                  val_col1, &val_row1, &op, val_col2, &val_row2) == 7) {
+  else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%[A-Z]%d%n", ref_col, &ref_row,
+                  val_col1, &val_row1, &op, val_col2, &val_row2,&slashn) == 7
+                  && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
     int col2 = get_col(val_col2);
-    if (is_valid_cell(row, col) && is_valid_cell(val_row1 - 1, col1) &&
-        is_valid_cell(val_row2 - 1, col2)) {
+    if (is_valid_cell(row, col) && is_valid_cell(val_row1 - 1, col1) && 
+    is_valid_cell(val_row2 - 1, col2) ) {  
       if (sheet.data[val_row1 - 1][col1].isError ||
           sheet.data[val_row2 - 1][col2].isError)
         calc_error = true;
@@ -216,12 +220,13 @@ void parser(char *command) {
      whenever recalculation needed.
    */
   // cell = int op cell
-  else if (sscanf(command, "%[A-Z]%d=%d%c%[A-Z]%d", ref_col, &ref_row, &val1,
-                  &op, val_col1, &val_row1) == 6) {
+  else if (sscanf(command, "%[A-Z]%d=%d%c%[A-Z]%d%n", ref_col, &ref_row, &val1,
+                  &op, val_col1, &val_row1,&slashn) == 6
+                  && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
-    if (is_valid_cell(row, col) && is_valid_cell(val_row1 - 1, col1)) {
+    if (is_valid_cell(row, col) && is_valid_cell(val_row1 - 1, col1) ) {
       if (sheet.data[val_row1 - 1][col1].isError)
         calc_error = true;
       else {
@@ -245,13 +250,14 @@ void parser(char *command) {
     }
   }
   // cell = cell op int
-  else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%d", ref_col, &ref_row, val_col1,
-                  &val_row1, &op, &val1) == 6) {
+  else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%d%n", ref_col, &ref_row, val_col1,
+                  &val_row1, &op, &val1,&slashn) == 6
+                  && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
 
-    if (is_valid_cell(row, col) && is_valid_cell(val_row1 - 1, col1)) {
+    if (is_valid_cell(row, col) && is_valid_cell(val_row1 - 1, col1) ) {
       if (sheet.data[val_row1 - 1][col1].isError)
         calc_error = true;
       else {
@@ -275,9 +281,10 @@ void parser(char *command) {
     }
   }
   // cell = func(cell:cell)
-  else if (sscanf(command, "%[A-Z]%d=%5[A-Z](%[A-Z]%d:%[A-Z]%d)", ref_col,
+  else if (sscanf(command, "%[A-Z]%d=%5[A-Z](%[A-Z]%d:%[A-Z]%d)%n", ref_col,
                   &ref_row, func, val_col1, &val_row1, val_col2,
-                  &val_row2) == 7) {
+                  &val_row2,&slashn) == 7
+                  && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
@@ -313,12 +320,13 @@ void parser(char *command) {
     }
   }
   // cell = int
-  else if (sscanf(command, "%[A-Z]%d=%d", ref_col, &ref_row, &val1) == 3) {
+  else if (sscanf(command, "%[A-Z]%d=%d%n", ref_col, &ref_row, &val1,&slashn) == 3
+           && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     sheet.data[row][col].isError = false;
     calc_error = false;
-    if (is_valid_cell(row, col)) {
+    if (is_valid_cell(row, col) ) {
       cell_info cell = {row, col};
       cell_info cell1 = {-1, -1};
       cell_info cell2 = {-1, -1};
@@ -329,13 +337,14 @@ void parser(char *command) {
     }
   }
   // cell = cell
-  else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d", ref_col, &ref_row, val_col1,
-                  &val_row1) == 4) {
+  else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%n", ref_col, &ref_row, val_col1,
+                  &val_row1,&slashn) == 4 
+                  && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
     int row1 = val_row1 - 1; 
-    if (is_valid_cell(row, col) && is_valid_cell(row1, col1)) {
+    if (is_valid_cell(row, col) && is_valid_cell(row1, col1)  ) {
       if (sheet.data[row1][col1].isError)
       calc_error = true; 
       
@@ -351,20 +360,20 @@ void parser(char *command) {
     }
   }
   // sleep(int)
-  else if (sscanf(command, "%[A-z]%d=SLEEP(%d)", ref_col, &ref_row, &val1) ==
-           3) {
+  else if (sscanf(command, "%[A-z]%d=SLEEP(%d)%n", ref_col, &ref_row, &val1,&slashn) == 3
+           && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     sheet.data[row][col].isError = false;
     calc_error = false;
-    if (is_valid_cell(row, col) && val1 >= 0) {
+    if (is_valid_cell(row, col) && val1 >= 0 ) {
       cell_info cell = {row, col};
       cell_info cell1 = {-1, -1};
       cell_info cell2 = {-1, -1};
       strcpy(status, "ok");
       add_constraints(cell, cell1, cell2, val1, 'X');
       sleep(val1);
-    } else if (is_valid_cell(row, col) && val1 < 0) {
+    } else if (is_valid_cell(row, col) && val1 < 0 ) {
       cell_info cell = {row, col};
       cell_info cell1 = {-1, -1};
       cell_info cell2 = {-1, -1};
@@ -375,13 +384,14 @@ void parser(char *command) {
     }
   }
   // cell = sleep(cell)
-  else if (sscanf(command, "%[A-z]%d=SLEEP(%[A-Z]%d)", ref_col, &ref_row,
-                  val_col1, &val_row1) == 4) {
+  else if (sscanf(command, "%[A-z]%d=SLEEP(%[A-Z]%d)%n", ref_col, &ref_row,
+                  val_col1, &val_row1,&slashn) == 4
+                  && command[slashn]=='\0') {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
     int row1 = val_row1 - 1; 
-    if (is_valid_cell(row, col) && is_valid_cell(row1, col1)) {
+    if (is_valid_cell(row, col) && is_valid_cell(row1, col1) ) {
       if (sheet.data[row1][col1].isError)
       calc_error = true;
       // else
