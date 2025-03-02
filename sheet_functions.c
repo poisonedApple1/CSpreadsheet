@@ -324,8 +324,14 @@ void add_to_tree(avl_tree *head, cell_info cell) {
   dependency_node *curr = sheet.data[cell.row][cell.col].dependencies;
   while (curr != NULL) {
     cell_info temp = {curr->data % 1000, curr->data / 1000};
-    avl_insert(head, curr->data);
-    add_to_tree(head, temp);
+    avl_node *node = avl_find(head, curr->data);
+    if(node == NULL){
+      avl_insert(head, curr->data);
+      add_to_tree(head, temp);
+    }
+    else{
+      node->indegree++;
+    }
     curr = curr->next;
   }
 }
@@ -434,8 +440,9 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
   if (cell->op_code == 'Z')
     sleep_timer+=value;
 
-  // pretty_print(tree);
+//   pretty_print(tree);
   queue *sorted = topological_sort(tree);
+
   while (!is_empty(sorted)) {
     avl_node *node = front(sorted);
     sorted = pop(sorted);
