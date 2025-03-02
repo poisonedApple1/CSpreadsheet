@@ -165,7 +165,7 @@ void parser(char *command) {
   // cell = int op int
   else if (sscanf(command, "%[A-Z]%d=%d%c%d%n", ref_col, &ref_row, &val1, &op,
                   &val2,&slashn) == 5
-                  && command[slashn]=='\0') {
+                  && command[slashn]=='\0' && (op == '+' || op == '-' || op == '*' || op == '/')) {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     if (is_valid_cell(row, col)) {
@@ -186,7 +186,7 @@ void parser(char *command) {
   // cell = cell op cell
   else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%[A-Z]%d%n", ref_col, &ref_row,
                   val_col1, &val_row1, &op, val_col2, &val_row2,&slashn) == 7
-                  && command[slashn]=='\0') {
+                  && command[slashn]=='\0' && (op == '+' || op == '-' || op == '*' || op == '/')) {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
@@ -222,7 +222,7 @@ void parser(char *command) {
   // cell = int op cell
   else if (sscanf(command, "%[A-Z]%d=%d%c%[A-Z]%d%n", ref_col, &ref_row, &val1,
                   &op, val_col1, &val_row1,&slashn) == 6
-                  && command[slashn]=='\0') {
+                  && command[slashn]=='\0' && (op == '+' || op == '-' || op == '*' || op == '/')) {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
@@ -252,7 +252,7 @@ void parser(char *command) {
   // cell = cell op int
   else if (sscanf(command, "%[A-Z]%d=%[A-Z]%d%c%d%n", ref_col, &ref_row, val_col1,
                   &val_row1, &op, &val1,&slashn) == 6
-                  && command[slashn]=='\0') {
+                  && command[slashn]=='\0' && (op == '+' || op == '-' || op == '*' || op == '/')) {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
@@ -321,7 +321,7 @@ void parser(char *command) {
   }
   // cell = int
   else if (sscanf(command, "%[A-Z]%d=%d%n", ref_col, &ref_row, &val1,&slashn) == 3
-           && command[slashn]=='\0') {
+           && command[slashn]=='\0' ) {
     int col = get_col(ref_col);
     int row = ref_row - 1;
     sheet.data[row][col].isError = false;
