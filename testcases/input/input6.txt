@@ -1,0 +1,7 @@
+disable_output
+B1=A2/A3
+A1=SUM(B1:ZZZ999)
+A3=1
+A2=1
+enable_output
+q

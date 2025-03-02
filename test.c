@@ -2,49 +2,48 @@
 #include <stdlib.h>
 
 #define BUFFER_SIZE 1024
-#define BUFFER_SIZE 1024
 
-void run_test() {
-  // Run the test command
-  int status =
-      system("./target/release/spreadsheet 999 18278 < input.txt > output.txt");
-  if (status != 0) {
-    printf("Error: Failed to execute test command.\n");
-    exit(1);
-  }
+void run_test(const char *program, const char *input_file, const char *output_file) {
+    char command[BUFFER_SIZE];
+    snprintf(command, sizeof(command), "%s < %s > %s", program, input_file, output_file);
+    int status = system(command);
+    if (status != 0) {
+        printf("Error: Failed to execute test command.\n");
+        exit(1);
+    }
 }
 
 void compare_files(const char *output_file, const char *expected_file) {
-  char temp1[BUFFER_SIZE], temp2[BUFFER_SIZE], command[BUFFER_SIZE];
+    char command[BUFFER_SIZE];
+    snprintf(command, sizeof(command), "sed 's/\\[[^]]*\\]//g' %s > output_filtered.txt", output_file);
+    system(command);
+    snprintf(command, sizeof(command), "sed 's/\\[[^]]*\\]//g' %s > expected_filtered.txt", expected_file);
+    system(command);
 
-  // Remove bracketed content and save to temporary files
-  snprintf(temp1, sizeof(temp1), "sed 's/\\[[^]]*\\]//g' %s > temp_output.txt",
-           output_file);
-  snprintf(temp2, sizeof(temp2),
-           "sed 's/\\[[^]]*\\]//g' %s > temp_expected.txt", expected_file);
+    int status = system("diff -u expected_filtered.txt output_filtered.txt");
 
-  system(temp1);
-  system(temp2);
+    system("rm -f output_filtered.txt expected_filtered.txt");
 
-  // Compare the processed files
-  snprintf(command, sizeof(command), "diff -u temp_expected.txt temp_output.txt");
-  int status = system(command);
-
-  if (status == 0) {
-    printf("All test cases passed successfully!\n");
-  } else {
-    printf("Mismatch found!\n");
-  }
-
-  // Cleanup temporary files
-  system("rm temp_output.txt temp_expected.txt");
+    if (status == 0) {
+        printf("All test cases passed successfully!\n");
+    } else {
+        printf("Mismatch found!\n");
+    }
 }
 
-int main() {
-  run_test();
-  compare_files("output.txt", "expected_output.txt");
-  run_test();
-  compare_files("output.txt", "expected_output.txt");
-  return 0;
+int main(int argc, char *argv[]) {
+    if (argc != 4) {
+        printf("Usage: %s <program> <input_file> <expected_output_file>\n", argv[0]);
+        return 1;
+    }
+    
+    const char *program = argv[1];
+    const char *input_file = argv[2];
+    const char *expected_file = argv[3];
+    const char *output_file = "output.txt";
+    
+    run_test(program, input_file, output_file);
+    compare_files(output_file, expected_file);
+    
+    return 0;
 }
-
