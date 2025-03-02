@@ -52,6 +52,8 @@ int main(int argc, char *argv[]) {
     //not printing the table if disable_output is active
     if (print_allowed)
       print_table(column_start, row_start);
+    else
+      printf("\n");
     printf("[%.1f] (%s) >", execution_time, status);
   }
 
