@@ -221,7 +221,8 @@ void recalculate(Cell *cell) {
         cell->isError = true;
         return;
       }
-      int val = cell->cell2.col + cell->cell2.row * pow(2, 16); 
+      
+      int val = (cell->cell2.row << 16) | (cell->cell2.col & 0xFFFF); 
       ans = compute_cell(cell->op_code,
                         sheet.data[cell->cell1.row][cell->cell1.col].value, val);
       if (calc_error)
@@ -421,7 +422,7 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
       cell->cell2.col = cell2.col;
       cell->cell2.row = cell2.row;
       cell->op_code = op_code;
-      int value = cell2.col + cell2.row * pow(2, 16);
+      int value = (cell2.row << 16) | (cell2.col & 0xFFFF); 
       if (sheet.data[cell1.row][cell1.col].isError) calc_error = true;
       else ans = compute_cell(op_code, sheet.data[cell1.row][cell1.col].value, value);
       insert_into_list(&sheet.data[cell1.row][cell1.col], curr_cell_row_col);
