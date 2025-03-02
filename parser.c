@@ -182,7 +182,6 @@ void parser(char *command) {
     int col2 = get_col(val_col2);
     if (is_valid_cell(row, col) && is_valid_cell(val_row1 - 1, col1) && 
     is_valid_cell(val_row2 - 1, col2) ) {  
-
       cell_info cell = {row, col};
       cell_info cell1 = {val_row1 - 1, col1};
       cell_info cell2 = {val_row2 - 1, col2};

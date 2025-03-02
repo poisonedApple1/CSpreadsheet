@@ -382,6 +382,11 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
     case 'X':
       ans = sheet.data[curr_cell.row][curr_cell.col].value;
       remove_dependency(curr_cell);
+      cell->op_code = op_code;
+      cell->cell1.col = -1;
+      cell->cell1.row = -1;
+      cell->cell2.col = -1;
+      cell->cell2.row = -1;
       break;
     case '=':
       if (check_cycle(tree, cell1, temp)) {
@@ -486,6 +491,7 @@ void add_constraints(cell_info curr_cell, cell_info cell1, cell_info cell2,
   if (cell->op_code == 'Z')
     sleep_timer+=ans;
 
+  pretty_print(tree);
   queue *sorted = topological_sort(tree);
 
   while (!is_empty(sorted)) {
