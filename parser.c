@@ -333,8 +333,6 @@ void parser(char *command) {
     int row = ref_row - 1;
     int col1 = get_col(val_col1);
     int row1 = val_row1 - 1; 
-    sheet.data[row][col].isError = false;
-    sheet.data[row][col].value = sheet.data[row1][col1].value;
     if (is_valid_cell(row, col) && is_valid_cell(row1, col1) ) {
       cell_info cell = {row, col};
       cell_info cell1 = {row1, col1};
