@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #define BUFFER_SIZE 1024
+#define BUFFER_SIZE 1024
 
 void run_test() {
   // Run the test command
@@ -42,5 +43,8 @@ void compare_files(const char *output_file, const char *expected_file) {
 int main() {
   run_test();
   compare_files("output.txt", "expected_output.txt");
+  run_test();
+  compare_files("output.txt", "expected_output.txt");
   return 0;
 }
+
